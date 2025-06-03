@@ -43,11 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedConfig = localStorage.getItem("phomConfig");
       if (savedConfig) {
         const config = JSON.parse(savedConfig);
-        systemKeysInput.value = config.systemKeys.join(",");
+        // systemKeysInput.value = config.systemKeys.join(",");
         joinDelayInput.value = config.joinDelay;
         checkDelayInput.value = config.checkDelay;
         selectedTableInput.value = config.selectedTable;
-        actionSelect.value = config.action || "joinTable";
+        actionSelect.value = config.actionSelect || "joinTable";
         logStatus("Đã tải cấu hình từ localStorage");
         return config;
       }
@@ -79,7 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
       checkDelay,
       selectedTable,
       systemKeys,
-      action,
+      actionSelect: action,
     };
 
     saveToLocalStorage(config);
