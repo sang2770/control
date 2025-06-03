@@ -1,5 +1,5 @@
 const { ipcRenderer } = require("electron");
-
+let currentAction = null;
 // Simple debounce function
 function debounce(func, wait) {
   let timeout;
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedConfig = localStorage.getItem("phomConfig");
       if (savedConfig) {
         const config = JSON.parse(savedConfig);
-        // systemKeysInput.value = config.systemKeys.join(",");
+        systemKeysInput.value = config.systemKeys.join(",");
         joinDelayInput.value = config.joinDelay;
         checkDelayInput.value = config.checkDelay;
         selectedTableInput.value = config.selectedTable;
@@ -115,11 +115,16 @@ document.addEventListener("DOMContentLoaded", () => {
         `Đã gửi lệnh ${selectedAction === "joinTable" ? "vào bàn" : "tạo bàn"}`
       );
     } else {
-      ipcRenderer.send("broadcast", { action: "stopJoinTable" });
+      if (currentAction === "joinTable") {
+        ipcRenderer.send("broadcast", { action: "stopJoinTable" });
+      } else {
+        ipcRenderer.send("broadcast", { action: "leaveTable" });
+      }
       joinRoomToggleButton.textContent = "Bắt Đầu";
       joinRoomToggleButton.style.backgroundColor = "green";
       logStatus("Đã gửi lệnh dừng");
     }
+    currentAction = selectedAction;
   });
 
   ipcRenderer.on("logStatus", (event, message) => {
