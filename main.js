@@ -18,7 +18,6 @@ if (!gotTheLock) {
 }
 
 let mainWindow;
-let systemKeys = []; // Lưu trữ danh sách systemKeys từ các client
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -45,9 +44,6 @@ function createWindow() {
         "Extension đã kết nối đến bảng điều khiển"
       );
 
-      // Gửi danh sách systemKeys hiện tại cho client mới kết nối
-      ws.send(JSON.stringify({ action: "updateSystemKeys", systemKeys }));
-
       ws.on("message", (message) => {
         console.log("Received from extension:", message.toString());
         try {
@@ -55,17 +51,14 @@ function createWindow() {
           // Xử lý khi client gửi systemKey
           if (data.action === "updateSystemKey" && data.systemKey) {
             // Thêm hoặc cập nhật systemKey
-            if (!systemKeys.includes(data.systemKey)) {
-              systemKeys.push(data.systemKey);
-              // Gửi danh sách systemKeys cập nhật về renderer
-              if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send("updateSystemKeys", systemKeys);
-              }
-              mainWindow.webContents.send(
-                "logStatus",
-                `Đã cập nhật systemKey: ${data.systemKey}`
-              );
+            // Gửi danh sách systemKeys cập nhật về renderer
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send("updateSystemKeys", [data.systemKey]);
             }
+            mainWindow.webContents.send(
+              "logStatus",
+              `Đã cập nhật systemKey: ${data.systemKey}`
+            );
           } else {
             // Gửi trạng thái khác tới renderer để hiển thị trong statusLog
             if (mainWindow && !mainWindow.isDestroyed()) {
