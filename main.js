@@ -8,7 +8,7 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
-  app.on("second-instance", (event, commandLine, workingDirectory) => {
+  app.on("second-instance", () => {
     // Nếu người dùng cố gắng mở một instance thứ hai, focus vào cửa sổ đầu tiên
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();

@@ -63,15 +63,19 @@ document.addEventListener("DOMContentLoaded", () => {
     statusLog.scrollTop = statusLog.scrollHeight;
   };
 
+  const getSystemKeys = () => {
+    return (systemKeysInput.value || "")
+     .split(",")
+     .map((key) => key.trim())
+     .filter((key) => key);
+  };
+
   // Hàm lưu cấu hình
   const saveSettings = () => {
     const joinDelay = parseInt(joinDelayInput.value) || 1000;
     const checkDelay = parseInt(checkDelayInput.value) || 1000;
     const selectedTable = selectedTableInput.value;
-    const systemKeys = (systemKeysInput.value || "")
-      .split(",")
-      .map((key) => key.trim())
-      .filter((key) => key);
+    const systemKeys = getSystemKeys();
     const action = actionSelect.value;
 
     const config = {
@@ -133,7 +137,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Xử lý cập nhật systemKeys từ main process
   ipcRenderer.on("updateSystemKeys", (event, newSystemKeys) => {
-    systemKeysInput.value = newSystemKeys.join(",");
+    const currentSystemKeys = getSystemKeys();
+    const newKeys = newSystemKeys.filter((key) =>!currentSystemKeys.includes(key));
+    if (newKeys.length > 0) {
+      logStatus(`Đã nhận thêm systemKeys: ${newKeys.join(", ")}`);
+    }
+    systemKeysInput.value = currentSystemKeys.concat(newKeys).join(",");
     saveSettings(); // Lưu lại cấu hình với systemKeys mới
     logStatus("Đã cập nhật danh sách systemKeys từ client");
   });
