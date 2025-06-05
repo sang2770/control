@@ -59,6 +59,12 @@ function createWindow() {
               "logStatus",
               `Đã cập nhật systemKey: ${data.systemKey}`
             );
+          } else if (data.action === "updateUserStatus" && data.userStatus) {
+            // Thêm hoặc cập nhật userStatus
+            mainWindow.webContents.send(
+              "logStatus",
+              `Đã cập nhật: ${data.userStatus}`
+            );
           } else {
             // Gửi trạng thái khác tới renderer để hiển thị trong statusLog
             if (mainWindow && !mainWindow.isDestroyed()) {
