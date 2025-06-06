@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const WebSocket = require("ws");
 
+let actionRunning = null;
 // Đảm bảo chỉ có một instance của ứng dụng chạy
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -59,6 +60,12 @@ function createWindow() {
               "logStatus",
               `Đã cập nhật systemKey: ${data.systemKey}`
             );
+
+            setTimeout(() => {
+              if (actionRunning) {
+                ws.send(JSON.stringify({ action: actionRunning }));
+              }
+            }, 1500);
           } else if (data.action === "updateUserStatus" && data.userStatus) {
             // Thêm hoặc cập nhật userStatus
             mainWindow.webContents.send(
@@ -111,6 +118,14 @@ function createWindow() {
 
   // Xử lý IPC message từ renderer
   ipcMain.on("broadcast", (event, message) => {
+    if (message.action === "joinTable" || message.action === "createTable") {
+      actionRunning = message.action;
+    } else if (
+      message.action === "stopJoinTable" ||
+      message.action === "leaveTable"
+    ) {
+      actionRunning = null;
+    }
     broadcast(message);
   });
 
