@@ -118,14 +118,7 @@ function createWindow() {
 
   // Xử lý IPC message từ renderer
   ipcMain.on("broadcast", (event, message) => {
-    if (message.action === "joinTable" || message.action === "createTable") {
-      actionRunning = message.action;
-    } else if (
-      message.action === "stopJoinTable" ||
-      message.action === "leaveTable"
-    ) {
-      actionRunning = null;
-    }
+    actionRunning = message.action;
     broadcast(message);
   });
 
