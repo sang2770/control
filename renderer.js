@@ -65,9 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const getSystemKeys = () => {
     return (systemKeysInput.value || "")
-     .split(",")
-     .map((key) => key.trim())
-     .filter((key) => key);
+      .split(",")
+      .map((key) => key.trim())
+      .filter((key) => key);
   };
 
   // Hàm lưu cấu hình
@@ -138,12 +138,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Xử lý cập nhật systemKeys từ main process
   ipcRenderer.on("updateSystemKeys", (event, newSystemKeys) => {
     const currentSystemKeys = getSystemKeys();
-    const newKeys = newSystemKeys.filter((key) =>!currentSystemKeys.includes(key));
+    const newKeys = newSystemKeys.filter(
+      (key) => !currentSystemKeys.includes(key)
+    );
     if (newKeys.length > 0) {
       logStatus(`Đã nhận thêm systemKeys: ${newKeys.join(", ")}`);
     }
     systemKeysInput.value = currentSystemKeys.concat(newKeys).join(",");
-    saveSettings(); // Lưu lại cấu hình với systemKeys mới
     logStatus("Đã cập nhật danh sách systemKeys từ client");
   });
 });
