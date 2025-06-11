@@ -93,14 +93,14 @@ document.addEventListener("DOMContentLoaded", () => {
   joinRoomToggleButton.addEventListener("click", () => {
     isJoining = !isJoining;
     if (isJoining) {
-      ipcRenderer.send("broadcast", { action: selectedAction });
+      ipcRenderer.send("broadcast", { action: 'joinTable' });
       joinRoomToggleButton.textContent = "Dừng";
       joinRoomToggleButton.style.backgroundColor = "red";
       logStatus(
         `Đã gửi lệnh vào bàn ${selectedTableInput.value} với delay ${joinDelayInput.value}ms`
       );
     } else {
-      ipcRenderer.send("broadcast", { action: "stopJoinTable" });
+      ipcRenderer.send("broadcast", { action: "stopRunning" });
       joinRoomToggleButton.textContent = "Bắt Đầu";
       joinRoomToggleButton.style.backgroundColor = "green";
       logStatus("Đã gửi lệnh dừng");
