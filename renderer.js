@@ -108,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   ipcRenderer.on("logStatus", (event, message) => {
+    console.log("message");
+    
     logStatus(message);
   });
 });
