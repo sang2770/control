@@ -37,7 +37,7 @@ function createWindow() {
   // Khởi động WebSocket server
   let wss;
   try {
-    wss = new WebSocket.Server({ port: 8080 });
+    wss = new WebSocket.Server({ port: 8081 });
     wss.on("connection", (ws) => {
       console.log("Extension connected to WebSocket server");
       mainWindow.webContents.send(
@@ -49,24 +49,7 @@ function createWindow() {
         console.log("Received from extension:", message.toString());
         try {
           const data = JSON.parse(message);
-          // Xử lý khi client gửi systemKey
-          if (data.action === "updateSystemKey" && data.systemKey) {
-            // Thêm hoặc cập nhật systemKey
-            // Gửi danh sách systemKeys cập nhật về renderer
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              mainWindow.webContents.send("updateSystemKeys", [data.systemKey]);
-            }
-            mainWindow.webContents.send(
-              "logStatus",
-              `Đã cập nhật systemKey: ${data.systemKey}`
-            );
-
-            setTimeout(() => {
-              if (actionRunning) {
-                ws.send(JSON.stringify({ action: actionRunning }));
-              }
-            }, 1500);
-          } else if (data.action === "updateUserStatus" && data.userStatus) {
+           if (data.action === "updateUserStatus" && data.userStatus) {
             // Thêm hoặc cập nhật userStatus
             mainWindow.webContents.send(
               "logStatus",
@@ -76,7 +59,7 @@ function createWindow() {
             // Gửi trạng thái khác tới renderer để hiển thị trong statusLog
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send(
-                "updateStatusLog",
+                "logStatus",
                 message.toString()
               );
             }
@@ -99,7 +82,7 @@ function createWindow() {
     console.error("Error starting WebSocket server:", error);
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send(
-        "updateStatusLog",
+        "logStatus",
         "Error starting WebSocket server: " + error.message
       );
     }
@@ -158,6 +141,6 @@ process.on("uncaughtException", (error) => {
   console.error("Uncaught Exception:", error);
   // Hiển thị lỗi cho người dùng nếu có thể
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("updateStatusLog", "Error: " + error.message);
+    mainWindow.webContents.send("logStatus", "Error: " + error.message);
   }
 });
