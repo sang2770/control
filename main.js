@@ -4,20 +4,6 @@ const path = require("path");
 const fs = require("fs");
 const WebSocket = require("ws");
 
-// Đảm bảo chỉ có một instance của ứng dụng chạy
-const gotTheLock = app.requestSingleInstanceLock();
-
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on("second-instance", () => {
-    // Nếu người dùng cố gắng mở một instance thứ hai, focus vào cửa sổ đầu tiên
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-  });
-}
 let mainWindow;
 
 function savePortToConfig(port) {
