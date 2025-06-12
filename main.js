@@ -1,26 +1,35 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
+const { findFreePort } = require("./initSocket");
 const path = require("path");
+const fs = require("fs");
 const WebSocket = require("ws");
 
 let actionRunning = null;
-// Đảm bảo chỉ có một instance của ứng dụng chạy
-const gotTheLock = app.requestSingleInstanceLock();
-
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on("second-instance", () => {
-    // Nếu người dùng cố gắng mở một instance thứ hai, focus vào cửa sổ đầu tiên
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
-  });
-}
 
 let mainWindow;
 
-function createWindow() {
+function savePortToConfig(port) {
+  let baseDir = "";
+
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    baseDir = process.env.PORTABLE_EXECUTABLE_DIR; // ✅ Đây là thư mục gốc chứa file .exe
+  } else {
+    baseDir = path.dirname(process.execPath); // fallback cho non-portable
+  }
+  const configPath = path.join(
+    app.isPackaged ? baseDir : path.join(__dirname, ".."),
+    "sunwin-extension",
+    "port.json"
+  );
+  mainWindow.webContents.send(
+    "logStatus",
+    `Đã lưu port: ${port} - ` + `path: ${configPath}`
+  );
+  const config = { port };
+  fs.writeFileSync(configPath, JSON.stringify(config));
+}
+
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 560,
     height: 450,
@@ -37,7 +46,15 @@ function createWindow() {
   // Khởi động WebSocket server
   let wss;
   try {
-    wss = new WebSocket.Server({ port: 8080 });
+    const port = await findFreePort();
+    wss = new WebSocket.Server({ port });
+    setTimeout(() => {
+      mainWindow.webContents.send(
+        "logStatus",
+        `WebSocket server started on port ${port}`
+      );
+      savePortToConfig(port);
+    }, 2000);
     wss.on("connection", (ws) => {
       console.log("Extension connected to WebSocket server");
       mainWindow.webContents.send(
@@ -137,12 +154,12 @@ app.setLoginItemSettings({
   path: app.getPath("exe"),
 });
 
-app.whenReady().then(() => {
-  createWindow();
+app.whenReady().then(async () => {
+  await createWindow();
 
-  app.on("activate", () => {
+  app.on("activate", async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      await createWindow();
     }
   });
 });
