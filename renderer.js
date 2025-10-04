@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.__inited = true;
   console.log("Start renderer at:", new Date().toISOString());
 
+  const systemKeysInput = document.getElementById("systemKeys");
   const joinDelayInput = document.getElementById("joinDelay");
   const checkDelayInput = document.getElementById("checkDelay");
   const selectedTableInput = document.getElementById("selectedTable");
@@ -40,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const savedConfig = localStorage.getItem("hitClubTienLenDemLa");
       if (savedConfig) {
         const config = JSON.parse(savedConfig);
+        systemKeysInput.value = config.systemKeys.join(",");
         joinDelayInput.value = config.joinDelay;
         checkDelayInput.value = config.checkDelay;
         selectedTableInput.value = config.selectedTable;
@@ -58,16 +60,24 @@ document.addEventListener("DOMContentLoaded", () => {
     statusLog.scrollTop = statusLog.scrollHeight;
   };
 
+  const getSystemKeys = () => {
+    return (systemKeysInput.value || "")
+      .split(",")
+      .map((key) => key.trim())
+      .filter((key) => key);
+  };
 
   // Hàm lưu cấu hình
   const saveSettings = () => {
     const joinDelay = parseInt(joinDelayInput.value) || 1000;
     const checkDelay = parseInt(checkDelayInput.value) || 1000;
     const selectedTable = selectedTableInput.value;
+    const systemKeys = getSystemKeys();
     const config = {
       joinDelay,
       checkDelay,
-      selectedTable
+      selectedTable,
+      systemKeys
     };
 
     saveToLocalStorage(config);
@@ -85,6 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFromLocalStorage();
 
   // Auto-save on input changes
+  systemKeysInput.addEventListener("input", debouncedSaveSettings);
   joinDelayInput.addEventListener("input", debouncedSaveSettings);
   checkDelayInput.addEventListener("input", debouncedSaveSettings);
   selectedTableInput.addEventListener("change", debouncedSaveSettings);
@@ -109,7 +120,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ipcRenderer.on("logStatus", (event, message) => {
     console.log("message");
-    
+
     logStatus(message);
+  });
+
+  // Xử lý cập nhật systemKeys từ main process
+  ipcRenderer.on("updateSystemKeys", (event, newSystemKeys) => {
+    const currentSystemKeys = getSystemKeys();
+    const newKeys = newSystemKeys.filter(
+      (key) => !currentSystemKeys.includes(key)
+    );
+    if (newKeys.length > 0) {
+      logStatus(`Đã nhận thêm systemKeys: ${newKeys.join(", ")}`);
+    }
+    systemKeysInput.value = currentSystemKeys.concat(newKeys).join(",");
+    logStatus("Đã cập nhật danh sách systemKeys từ client");
   });
 });

@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 const WebSocket = require("ws");
 
+let actionRunning = null;
 let mainWindow;
 
 function savePortToConfig(port) {
@@ -63,7 +64,23 @@ async function createWindow() {
         console.log("Received from extension:", message.toString());
         try {
           const data = JSON.parse(message);
-          if (data.action === "updateUserStatus" && data.userStatus) {
+          if (data.action === "updateSystemKey" && data.systemKey) {
+            // Thêm hoặc cập nhật systemKey
+            // Gửi danh sách systemKeys cập nhật về renderer
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send("updateSystemKeys", [data.systemKey]);
+            }
+            mainWindow.webContents.send(
+              "logStatus",
+              `Đã cập nhật systemKey: ${data.systemKey}`
+            );
+
+            setTimeout(() => {
+              if (actionRunning) {
+                ws.send(JSON.stringify({ action: actionRunning }));
+              }
+            }, 1500);
+          } else if (data.action === "updateUserStatus" && data.userStatus) {
             // Thêm hoặc cập nhật userStatus
             mainWindow.webContents.send(
               "logStatus",
@@ -89,7 +106,9 @@ async function createWindow() {
 
       ws.on("close", () => {
         console.log("Extension disconnected from WebSocket server");
-        mainWindow.webContents.send("logStatus", "Extension đã ngắt kết nối");
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("logStatus", "Extension đã ngắt kết nối");
+        }
       });
     });
   } catch (error) {
@@ -115,6 +134,7 @@ async function createWindow() {
 
   // Xử lý IPC message từ renderer
   ipcMain.on("broadcast", (event, message) => {
+    actionRunning = message.action;
     broadcast(message);
   });
 
