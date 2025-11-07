@@ -126,6 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       if (currentAction === "joinTable") {
         ipcRenderer.send("broadcast", { action: "stopJoinTable" });
+      } else if (currentAction === "createTableBot") {
+        ipcRenderer.send("broadcast", { action: "leaveTable" });
       } else {
         ipcRenderer.send("broadcast", { action: "leaveTable" });
       }
