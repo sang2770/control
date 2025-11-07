@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const actionSelect = document.getElementById("actionSelect");
   const joinRoomToggleButton = document.getElementById("joinRoomToggle");
   const statusLog = document.getElementById("statusLog");
+  const botToggle = document.getElementById('botModeToggle');
   let isJoining = false;
 
   // Hàm lưu cấu hình vào localStorage
@@ -48,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         checkDelayInput.value = config.checkDelay;
         selectedTableInput.value = config.selectedTable;
         actionSelect.value = config.actionSelect || "joinTable";
+        botToggle.checked = config.botMode || true;
         logStatus("Đã tải cấu hình từ localStorage");
         return config;
       }
@@ -77,6 +79,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedTable = selectedTableInput.value;
     const systemKeys = getSystemKeys();
     const action = actionSelect.value;
+    const botMode = botToggle.checked;
 
     const config = {
       joinDelay,
@@ -84,6 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedTable,
       systemKeys,
       actionSelect: action,
+      botMode,
     };
 
     saveToLocalStorage(config);
@@ -106,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkDelayInput.addEventListener("input", debouncedSaveSettings);
   selectedTableInput.addEventListener("change", debouncedSaveSettings);
   actionSelect.addEventListener("change", debouncedSaveSettings);
+  botToggle.addEventListener("change", debouncedSaveSettings);
 
   // Toggle start/stop action
   joinRoomToggleButton.addEventListener("click", () => {
