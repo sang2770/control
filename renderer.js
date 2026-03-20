@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const checkDelayInput = document.getElementById("checkDelay");
   const selectedTableInput = document.getElementById("selectedTable");
   const joinRoomToggleButton = document.getElementById("joinRoomToggle");
+  const methodInput = document.getElementById("method");
   const statusLog = document.getElementById("statusLog");
   let isJoining = false;
 
@@ -45,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
         joinDelayInput.value = config.joinDelay;
         checkDelayInput.value = config.checkDelay;
         selectedTableInput.value = config.selectedTable;
+        methodInput.value = config.method || 1;
         logStatus("Đã tải cấu hình từ localStorage");
         return config;
       }
@@ -72,11 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const joinDelay = parseInt(joinDelayInput.value) || 1000;
     const checkDelay = parseInt(checkDelayInput.value) || 1000;
     const selectedTable = selectedTableInput.value;
+    const method = methodInput.value;
     const systemKeys = getSystemKeys();
     const config = {
       joinDelay,
       checkDelay,
       selectedTable,
+      method,
       systemKeys
     };
 
@@ -99,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
   joinDelayInput.addEventListener("input", debouncedSaveSettings);
   checkDelayInput.addEventListener("input", debouncedSaveSettings);
   selectedTableInput.addEventListener("change", debouncedSaveSettings);
+  methodInput.addEventListener("change", debouncedSaveSettings);
 
   // Toggle start/stop action
   joinRoomToggleButton.addEventListener("click", () => {

@@ -97,10 +97,12 @@ async function createWindow() {
           }
         } catch (error) {
           console.error("Error parsing message:", error);
-          mainWindow.webContents.send(
-            "logStatus",
-            `Lỗi xử lý message từ client: ${error.message}`
-          );
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send(
+              "logStatus",
+              `Lỗi xử lý message từ client: ${error.message}`
+            );
+          }
         }
       });
 
