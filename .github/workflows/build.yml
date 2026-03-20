@@ -2,9 +2,9 @@ name: Build Windows App
 
 on:
   push:
-    branches: ["hit-phom", "master"]
+    branches: ["feature/hit-phom", "master"]
   pull_request:
-    branches: ["hit-phom", "master"]
+    branches: ["feature/hit-phom", "master"]
   workflow_dispatch: # Allow manual triggering
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
           echo "Build configuration ready"
 
       - name: Build for Windows
-        run: npm run build-win
+        run: npm run build:win
         env:
           CI: true
 
@@ -53,7 +53,7 @@ jobs:
           retention-days: 30
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/hit-phom')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/feature/hit-phom')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
