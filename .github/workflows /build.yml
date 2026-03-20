@@ -2,9 +2,9 @@ name: Build Windows App
 
 on:
   push:
-    branches: ["hit-phom"]
+    branches: ["hit-phom", "master"]
   pull_request:
-    branches: ["hit-phom"]
+    branches: ["hit-phom", "master"]
   workflow_dispatch: # Allow manual triggering
 
 permissions:
