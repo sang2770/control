@@ -125,11 +125,11 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     } else {
       if (currentAction === "joinTable") {
-        ipcRenderer.send("broadcast", { action: "stopJoinTable" });
+        ipcRenderer.send("broadcast", { action: "stopJoinTable", isStop: true });
       } else if (currentAction === "createTableBot") {
-        ipcRenderer.send("broadcast", { action: "leaveTable" });
+        ipcRenderer.send("broadcast", { action: "leaveTable", isStop: true });
       } else {
-        ipcRenderer.send("broadcast", { action: "leaveTable" });
+        ipcRenderer.send("broadcast", { action: "leaveTable", isStop: true });
       }
       joinRoomToggleButton.textContent = "Bắt Đầu";
       joinRoomToggleButton.style.backgroundColor = "green";

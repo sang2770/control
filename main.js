@@ -137,6 +137,9 @@ async function createWindow() {
   ipcMain.on("broadcast", (event, message) => {
     actionRunning = message.action;
     broadcast(message);
+    if (message.isStop) {
+      actionRunning = null;
+    }
   });
 
   mainWindow.on("closed", () => {
