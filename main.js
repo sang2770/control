@@ -55,6 +55,8 @@ async function createWindow() {
       );
       savePortToConfig(port);
     }, 2000);
+    const clients = new Map();
+
     wss.on("connection", (ws) => {
       console.log("Extension connected to WebSocket server");
       mainWindow.webContents.send(
@@ -62,16 +64,20 @@ async function createWindow() {
         "Extension đã kết nối đến bảng điều khiển"
       );
 
+      let clientName = null;
+
       ws.on("message", (message) => {
-        console.log("Received from extension:", message.toString());
+        // console.log("Received from extension:", message.toString());
         try {
           const data = JSON.parse(message);
           // Xử lý khi client gửi systemKey
           if (data.action === "updateSystemKey" && data.systemKey) {
-            // Thêm hoặc cập nhật systemKey
-            // Gửi danh sách systemKeys cập nhật về renderer
+            clientName = data.systemKey;
+            clients.set(clientName, ws);
+            
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send("updateSystemKeys", [data.systemKey]);
+              mainWindow.webContents.send("updatePlayerList", Array.from(clients.keys()));
             }
             mainWindow.webContents.send(
               "logStatus",
@@ -84,17 +90,27 @@ async function createWindow() {
               }
             }, 1500);
           } else if (data.action === "updateUserStatus" && data.userStatus) {
-            // Thêm hoặc cập nhật userStatus
-            mainWindow.webContents.send(
-              "logStatus",
-              `Đã cập nhật: ${data.userStatus}`
-            );
+            const status = data.userStatus;
+            
+            // Check if it's Mau Binh solutions
+            if (status && status.type === "MAUBINH_SOLUTIONS") {
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send("mauBinhSolutions", {
+                  playerName: clientName,
+                  solutions: status.solutions
+                });
+              }
+            } else {
+              mainWindow.webContents.send(
+                "logStatus",
+                `Đã cập nhật (${clientName || 'Unknown'}): ${JSON.stringify(status)}`
+              );
+            }
           } else {
-            // Gửi trạng thái khác tới renderer để hiển thị trong statusLog
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send(
                 "updateStatusLog",
-                message.toString()
+                `Message từ ${clientName || 'Unknown'}: ` + message.toString()
               );
             }
           }
@@ -108,10 +124,26 @@ async function createWindow() {
       });
 
       ws.on("close", () => {
+        if (clientName) {
+          clients.delete(clientName);
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("updatePlayerList", Array.from(clients.keys()));
+          }
+        }
         console.log("Extension disconnected from WebSocket server");
-        mainWindow.webContents.send("logStatus", "Extension đã ngắt kết nối");
+        mainWindow.webContents.send("logStatus", `Extension ${clientName || ''} đã ngắt kết nối`);
       });
     });
+
+    // Integrated targeted send in broadcast logic or new IPC
+    ipcMain.on("sendToPlayer", (event, { playerName, message }) => {
+       const ws = clients.get(playerName);
+       if (ws && ws.readyState === WebSocket.OPEN) {
+         ws.send(JSON.stringify(message));
+         console.log(`Sent to ${playerName}:`, message.action);
+       }
+    });
+
   } catch (error) {
     console.error("Error starting WebSocket server:", error);
     if (mainWindow && !mainWindow.isDestroyed()) {

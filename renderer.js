@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const actionSelect = document.getElementById("actionSelect");
   const joinRoomToggleButton = document.getElementById("joinRoomToggle");
   const statusLog = document.getElementById("statusLog");
-  const botToggle = document.getElementById('botModeToggle');
   let isJoining = false;
 
   // Hàm lưu cấu hình vào localStorage
@@ -49,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
         checkDelayInput.value = config.checkDelay;
         selectedTableInput.value = config.selectedTable;
         actionSelect.value = config.actionSelect || "joinTable";
-        botToggle.checked = config.botMode || true;
         logStatus("Đã tải cấu hình từ localStorage");
         return config;
       }
@@ -79,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedTable = selectedTableInput.value;
     const systemKeys = getSystemKeys();
     const action = actionSelect.value;
-    const botMode = botToggle.checked;
 
     const config = {
       joinDelay,
@@ -87,7 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
       selectedTable,
       systemKeys,
       actionSelect: action,
-      botMode,
     };
 
     saveToLocalStorage(config);
@@ -110,7 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
   checkDelayInput.addEventListener("input", debouncedSaveSettings);
   selectedTableInput.addEventListener("change", debouncedSaveSettings);
   actionSelect.addEventListener("change", debouncedSaveSettings);
-  botToggle.addEventListener("change", debouncedSaveSettings);
 
   // Toggle start/stop action
   joinRoomToggleButton.addEventListener("click", () => {
@@ -126,8 +121,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       if (currentAction === "joinTable") {
         ipcRenderer.send("broadcast", { action: "stopJoinTable", isStop: true });
-      } else if (currentAction === "createTableBot") {
-        ipcRenderer.send("broadcast", { action: "leaveTable", isStop: true });
       } else {
         ipcRenderer.send("broadcast", { action: "leaveTable", isStop: true });
       }
@@ -136,6 +129,86 @@ document.addEventListener("DOMContentLoaded", () => {
       logStatus("Đã gửi lệnh dừng");
     }
     currentAction = selectedAction;
+  });
+
+  const playerList = document.getElementById("playerList");
+  const maubinhModal = document.getElementById("maubinhModal");
+  const closeModal = document.getElementById("closeModal");
+  const modalPlayerName = document.getElementById("modalPlayerName");
+  const solutionsList = document.getElementById("solutionsList");
+
+  let playersData = {}; // Store solutions per player
+
+  // Render player list
+  const renderPlayers = (names) => {
+    playerList.innerHTML = "";
+    names.forEach(name => {
+      const card = document.createElement("div");
+      card.className = "player-card";
+      if (playersData[name] && playersData[name].length > 0) {
+        card.classList.add("has-cards");
+      }
+      card.textContent = name;
+      card.onclick = () => showMauBinhModal(name);
+      playerList.appendChild(card);
+    });
+  };
+
+  const showMauBinhModal = (playerName) => {
+    const solutions = playersData[playerName] || [];
+    modalPlayerName.textContent = playerName;
+    solutionsList.innerHTML = "";
+    
+    if (solutions.length === 0) {
+      solutionsList.innerHTML = "<p>Chưa có bài hoặc chưa giải được bài.</p>";
+    } else {
+      solutions.forEach((sol, index) => {
+        const item = document.createElement("div");
+        item.className = "solution-item";
+        item.innerHTML = `
+          <strong>Phương án ${index + 1}</strong>
+          <div class="chi-row"><span class="chi-header">Chi 1:</span> <span class="card-list">${sol.chi1.cards.join(", ")}</span> <span class="loai-label">${sol.chi1.loai}</span></div>
+          <div class="chi-row"><span class="chi-header">Chi 2:</span> <span class="card-list">${sol.chi2.cards.join(", ")}</span> <span class="loai-label">${sol.chi2.loai}</span></div>
+          <div class="chi-row"><span class="chi-header">Chi 3:</span> <span class="card-list">${sol.chi3.cards.join(", ")}</span> <span class="loai-label">${sol.chi3.loai}</span></div>
+        `;
+        item.onclick = () => {
+          setArrangement(playerName, sol);
+          maubinhModal.style.display = "none";
+        };
+        solutionsList.appendChild(item);
+      });
+    }
+    maubinhModal.style.display = "block";
+  };
+
+  const setArrangement = (playerName, solution) => {
+    // Collect all card IDs in order Chi 1 (5), Chi 2 (5), Chi 3 (3)
+    const cards = [
+      ...solution.chi1.cardIds,
+      ...solution.chi2.cardIds,
+      ...solution.chi3.cardIds
+    ];
+    
+    ipcRenderer.send("sendToPlayer", {
+      playerName,
+      message: {
+        action: "setMauBinhArrangement",
+        data: { cards }
+      }
+    });
+    logStatus(`Đã gửi lệnh xếp bài cho ${playerName}`);
+  };
+
+  closeModal.onclick = () => maubinhModal.style.display = "none";
+
+  ipcRenderer.on("updatePlayerList", (event, names) => {
+    renderPlayers(names);
+  });
+
+  ipcRenderer.on("mauBinhSolutions", (event, { playerName, solutions }) => {
+    playersData[playerName] = solutions;
+    logStatus(`Đã nhận ${solutions.length} phương án xếp bài cho ${playerName}`);
+    renderPlayers(Object.keys(playersData));
   });
 
   ipcRenderer.on("logStatus", (event, message) => {

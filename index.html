@@ -1,125 +1,167 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Phom Control Panel</title>
-    <link rel="stylesheet" href="styles.css" />
-    <meta charset="UTF-8" />
-    <style>
-      .d-flex {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-    </style>
-  </head>
 
-  <body>
+<head>
+  <title>Mậu Binh Control Panel</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8" />
+  <style>
+    .d-flex {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <label for="systemKeys">Danh sách key hợp lệ (phân cách bằng dấu phẩy):</label>
+    <textarea style="width: 96%" id="systemKeys" placeholder="Enter system keys (e.g., a,b,c)"></textarea>
+  </div>
+  <div class="d-flex" style="gap: 10px">
     <div>
-      <label for="systemKeys"
-        >Danh sách key hợp lệ (phân cách bằng dấu phẩy):</label
-      >
-      <textarea
-        style="width: 96%"
-        id="systemKeys"
-        placeholder="Enter system keys (e.g., a,b,c)"
-      ></textarea>
-    </div>
-    <div class="d-flex" style="gap: 10px">
-      <div>
-        <label for="joinDelay">Delay Vào Bàn (ms):</label>
-        <input
-          type="number"
-          id="joinDelay"
-          placeholder="Enter delay in ms"
-          min="0"
-        />
-      </div>
-      <div>
-        <label for="checkDelay">Delay Check Tên (ms):</label>
-        <input
-          type="number"
-          id="checkDelay"
-          placeholder="Enter delay in ms"
-          min="0"
-        />
-      </div>
-      <div style="flex: 1">
-        <label for="selectedTable">Chọn Bàn Tiền:</label>
-        <select id="selectedTable" style="width: 100%">
-          <option value="100">100</option>
-          <option value="500">500</option>
-          <option value="1000">1K</option>
-          <option value="2000">2K</option>
-          <option value="5000">5K</option>
-          <option value="10000">10K</option>
-          <option value="20000">20K</option>
-          <option value="50000">50K</option>
-          <option value="100000">100K</option>
-          <option value="200000">200K</option>
-          <option value="500000">500K</option>
-          <option value="1000000">1M</option>
-          <option value="2000000">2M</option>
-          <option value="5000000">5M</option>
-          <option value="10000000">10M</option>
-        </select>
-      </div>
-    </div>
-    <div class="d-flex" style="gap: 10px">
-      <div>
-        <label for="actionSelect">Hành động:</label>
-        <select id="actionSelect" style="width: 200px">
-          <option value="joinTable">Vào Bàn</option>
-          <option value="createTable">Tạo Bàn</option>
-          <option value="createTableBot">Tạo Bàn Bot</option>
-        </select>
-      </div>
-      <div
-        class="d-flex"
-        style="gap: 10px; align-items: center; margin-top: 10px"
-      >
-        <label for="botModeToggle">Bật Bot:</label>
-        <input
-          type="checkbox"
-          id="botModeToggle"
-          style="width: 20px; height: 20px"
-        />
-      </div>
-    </div>
-
-    <button
-      id="joinRoomToggle"
-      style="background-color: green; color: white; width: 100%"
-    >
-      Bắt Đầu
-    </button>
-
-    <div id="note">
-      <p>
-        <strong>Chú ý: Ở lại bàn trong 2 trường hợp</strong>
-      </p>
-      <ul>
-        <li>
-          <p>
-            <strong>1. </strong>
-            <span> Mình là chủ bàn và có key lạ đang đánh </span>
-          </p>
-        </li>
-        <li>
-          <p>
-            <strong>2. </strong>
-            <span> Key lạ là chủ bàn và có key hệ thống trong bàn </span>
-          </p>
-        </li>
-      </ul>
+      <label for="joinDelay">Delay Vào Bàn (ms):</label>
+      <input type="number" id="joinDelay" placeholder="Enter delay in ms" min="0" />
     </div>
     <div>
-      <label>Trạng thái:</label>
-      <textarea
-        id="statusLog"
-        readonly
-        style="width: 96%; height: 100px"
-      ></textarea>
+      <label for="checkDelay">Delay Check Tên (ms):</label>
+      <input type="number" id="checkDelay" placeholder="Enter delay in ms" min="0" />
     </div>
-    <script src="renderer.js"></script>
-  </body>
+    <div style="flex: 1">
+      <label for="selectedTable">Chọn Bàn Tiền:</label>
+      <select id="selectedTable" style="width: 100%">
+        <option value="100">100</option>
+        <option value="500">500</option>
+        <option value="1000">1K</option>
+        <option value="2000">2K</option>
+        <option value="5000">5K</option>
+        <option value="10000">10K</option>
+        <option value="20000">20K</option>
+        <option value="50000">50K</option>
+        <option value="100000">100K</option>
+        <option value="200000">200K</option>
+        <option value="500000">500K</option>
+        <option value="1000000">1M</option>
+        <option value="2000000">2M</option>
+        <option value="5000000">5M</option>
+        <option value="10000000">10M</option>
+      </select>
+    </div>
+  </div>
+  <div class="d-flex" style="gap: 10px">
+    <div>
+      <label for="actionSelect">Hành động:</label>
+      <select id="actionSelect" style="width: 200px">
+        <option value="joinTable">Vào Bàn</option>
+        <option value="createTable">Tạo Bàn</option>
+      </select>
+    </div>
+  </div>
+
+  <button id="joinRoomToggle" style="background-color: green; color: white; width: 100%">
+    Bắt Đầu
+  </button>
+
+  <div id="playerListSection" style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+    <strong>Người chơi đang kết nối:</strong>
+    <div id="playerList" class="d-flex" style="margin-top: 5px;">
+      <!-- Players will be added here -->
+    </div>
+  </div>
+
+  <div id="note">
+    <p>
+      <strong>Chú ý: Ở lại bàn trong 2 trường hợp</strong>
+    </p>
+    <ul>
+      <li>
+        <p>
+          <strong>1. </strong>
+          <span> Mình là chủ bàn và có key lạ đang đánh </span>
+        </p>
+      </li>
+      <li>
+        <p>
+          <strong>2. </strong>
+          <span> Key lạ là chủ bàn và có key hệ thống trong bàn </span>
+        </p>
+      </li>
+    </ul>
+  </div>
+  <div>
+    <label>Trạng thái:</label>
+    <textarea id="statusLog" readonly style="width: 96%; height: 100px"></textarea>
+  </div>
+
+  <!-- Mau Binh Modal -->
+  <div id="maubinhModal"
+    style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
+    <div
+      style="background: #222; color: #fff; margin: 20px auto; width: 90%; padding: 20px; border-radius: 8px; position: relative;">
+      <span id="closeModal"
+        style="position: absolute; right: 20px; top: 10px; font-size: 24px; cursor: pointer;">&times;</span>
+      <h3>Xếp bài Mậu Binh: <span id="modalPlayerName"></span></h3>
+      <div id="solutionsList" style="display: flex; flex-direction: column; gap: 10px;">
+        <!-- Solutions will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .player-card {
+      background: #eee;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid #bbb;
+    }
+
+    .player-card:hover {
+      background: #ddd;
+    }
+
+    .player-card.has-cards {
+      background: #4caf50;
+      color: white;
+      border-color: #2e7d32;
+    }
+
+    .solution-item {
+      background: #333;
+      border: 1px solid #444;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .solution-item:hover {
+      background: #444;
+    }
+
+    .chi-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+
+    .chi-header {
+      font-weight: bold;
+      min-width: 50px;
+    }
+
+    .card-list {
+      color: #ffca28;
+    }
+
+    .loai-label {
+      background: #555;
+      padding: 2px 5px;
+      font-size: 0.8em;
+      border-radius: 3px;
+    }
+  </style>
+  <script src="renderer.js"></script>
+</body>
+
 </html>
