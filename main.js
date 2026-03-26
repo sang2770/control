@@ -174,6 +174,38 @@ async function createWindow() {
     }
   });
 
+  // Handle opening solver window for a specific player
+  ipcMain.on("openSolverWindow", (event, { playerName, solutions }) => {
+    const solverWin = new BrowserWindow({
+      width: 500,
+      height: 700,
+      title: `Mau Binh Solver - ${playerName}`,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+    });
+
+    solverWin.loadFile("solver.html");
+    // solverWin.webContents.openDevTools();
+
+    solverWin.webContents.on('did-finish-load', () => {
+      solverWin.webContents.send('init-data', { playerName, solutions });
+    });
+  });
+
+  // Handle arrangement application from the solver window
+  ipcMain.on("apply-arrangement", (event, { playerName, cards }) => {
+      const ws = clients.get(playerName);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+              action: "setMauBinhArrangement",
+              data: { cards }
+          }));
+          mainWindow.webContents.send("logStatus", `Đã áp dụng xếp bài cho ${playerName}`);
+      }
+  });
+
   mainWindow.on("closed", () => {
     mainWindow = null;
     // Đóng WebSocket server khi cửa sổ đóng

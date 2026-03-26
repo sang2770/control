@@ -156,50 +156,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const showMauBinhModal = (playerName) => {
     const solutions = playersData[playerName] || [];
-    modalPlayerName.textContent = playerName;
-    solutionsList.innerHTML = "";
-    
     if (solutions.length === 0) {
-      solutionsList.innerHTML = "<p>Chưa có bài hoặc chưa giải được bài.</p>";
-    } else {
-      solutions.forEach((sol, index) => {
-        const item = document.createElement("div");
-        item.className = "solution-item";
-        item.innerHTML = `
-          <strong>Phương án ${index + 1}</strong>
-          <div class="chi-row"><span class="chi-header">Chi 1:</span> <span class="card-list">${sol.chi1.cards.join(", ")}</span> <span class="loai-label">${sol.chi1.loai}</span></div>
-          <div class="chi-row"><span class="chi-header">Chi 2:</span> <span class="card-list">${sol.chi2.cards.join(", ")}</span> <span class="loai-label">${sol.chi2.loai}</span></div>
-          <div class="chi-row"><span class="chi-header">Chi 3:</span> <span class="card-list">${sol.chi3.cards.join(", ")}</span> <span class="loai-label">${sol.chi3.loai}</span></div>
-        `;
-        item.onclick = () => {
-          setArrangement(playerName, sol);
-          maubinhModal.style.display = "none";
-        };
-        solutionsList.appendChild(item);
-      });
+      logStatus(`Chưa có dữ liệu bài cho ${playerName}`);
+      return;
     }
-    maubinhModal.style.display = "block";
-  };
-
-  const setArrangement = (playerName, solution) => {
-    // Collect all card IDs in order Chi 1 (5), Chi 2 (5), Chi 3 (3)
-    const cards = [
-      ...solution.chi1.cardIds,
-      ...solution.chi2.cardIds,
-      ...solution.chi3.cardIds
-    ];
     
-    ipcRenderer.send("sendToPlayer", {
-      playerName,
-      message: {
-        action: "setMauBinhArrangement",
-        data: { cards }
-      }
+    // Open a new Electron window instead of showing a local modal
+    ipcRenderer.send("openSolverWindow", {
+        playerName,
+        solutions
     });
-    logStatus(`Đã gửi lệnh xếp bài cho ${playerName}`);
   };
 
-  closeModal.onclick = () => maubinhModal.style.display = "none";
+  // setArrangement logic moved to main.js and solver_renderer.js (solver.html)
 
   ipcRenderer.on("updatePlayerList", (event, names) => {
     renderPlayers(names);
@@ -208,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ipcRenderer.on("mauBinhSolutions", (event, { playerName, solutions }) => {
     playersData[playerName] = solutions;
     logStatus(`Đã nhận ${solutions.length} phương án xếp bài cho ${playerName}`);
-    renderPlayers(Object.keys(playersData));
+    renderPlayers(Object.keys(playersData).length ? Object.keys(playersData) : [playerName]);
   });
 
   ipcRenderer.on("logStatus", (event, message) => {

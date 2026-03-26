@@ -94,20 +94,6 @@
     <textarea id="statusLog" readonly style="width: 96%; height: 100px"></textarea>
   </div>
 
-  <!-- Mau Binh Modal -->
-  <div id="maubinhModal"
-    style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; overflow-y: auto;">
-    <div
-      style="background: #222; color: #fff; margin: 20px auto; width: 90%; padding: 20px; border-radius: 8px; position: relative;">
-      <span id="closeModal"
-        style="position: absolute; right: 20px; top: 10px; font-size: 24px; cursor: pointer;">&times;</span>
-      <h3>Xếp bài Mậu Binh: <span id="modalPlayerName"></span></h3>
-      <div id="solutionsList" style="display: flex; flex-direction: column; gap: 10px;">
-        <!-- Solutions will be populated here -->
-      </div>
-    </div>
-  </div>
-
   <style>
     .player-card {
       background: #eee;
@@ -125,40 +111,6 @@
       background: #4caf50;
       color: white;
       border-color: #2e7d32;
-    }
-
-    .solution-item {
-      background: #333;
-      border: 1px solid #444;
-      padding: 10px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .solution-item:hover {
-      background: #444;
-    }
-
-    .chi-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-
-    .chi-header {
-      font-weight: bold;
-      min-width: 50px;
-    }
-
-    .card-list {
-      color: #ffca28;
-    }
-
-    .loai-label {
-      background: #555;
-      padding: 2px 5px;
-      font-size: 0.8em;
-      border-radius: 3px;
     }
   </style>
   <script src="renderer.js"></script>
