@@ -45,6 +45,7 @@ async function createWindow() {
 
   // Khởi động WebSocket server
   let wss;
+  const clients = new Map();
   try {
     const port = await findFreePort();
     wss = new WebSocket.Server({ port });
@@ -55,7 +56,6 @@ async function createWindow() {
       );
       savePortToConfig(port);
     }, 2000);
-    const clients = new Map();
 
     wss.on("connection", (ws) => {
       console.log("Extension connected to WebSocket server");
@@ -74,7 +74,7 @@ async function createWindow() {
           if (data.action === "updateSystemKey" && data.systemKey) {
             clientName = data.systemKey;
             clients.set(clientName, ws);
-            
+
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send("updateSystemKeys", [data.systemKey]);
               mainWindow.webContents.send("updatePlayerList", Array.from(clients.keys()));
@@ -91,7 +91,7 @@ async function createWindow() {
             }, 1500);
           } else if (data.action === "updateUserStatus" && data.userStatus) {
             const status = data.userStatus;
-            
+
             // Check if it's Mau Binh solutions
             if (status && status.type === "MAUBINH_SOLUTIONS") {
               if (mainWindow && !mainWindow.isDestroyed()) {
@@ -137,11 +137,11 @@ async function createWindow() {
 
     // Integrated targeted send in broadcast logic or new IPC
     ipcMain.on("sendToPlayer", (event, { playerName, message }) => {
-       const ws = clients.get(playerName);
-       if (ws && ws.readyState === WebSocket.OPEN) {
-         ws.send(JSON.stringify(message));
-         console.log(`Sent to ${playerName}:`, message.action);
-       }
+      const ws = clients.get(playerName);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+        console.log(`Sent to ${playerName}:`, message.action);
+      }
     });
 
   } catch (error) {
@@ -177,8 +177,8 @@ async function createWindow() {
   // Handle opening solver window for a specific player
   ipcMain.on("openSolverWindow", (event, { playerName, solutions }) => {
     const solverWin = new BrowserWindow({
-      width: 500,
-      height: 700,
+      width: 900,
+      height: 650,
       title: `Mau Binh Solver - ${playerName}`,
       webPreferences: {
         nodeIntegration: true,
@@ -196,14 +196,14 @@ async function createWindow() {
 
   // Handle arrangement application from the solver window
   ipcMain.on("apply-arrangement", (event, { playerName, cards }) => {
-      const ws = clients.get(playerName);
-      if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-              action: "setMauBinhArrangement",
-              data: { cards }
-          }));
-          mainWindow.webContents.send("logStatus", `Đã áp dụng xếp bài cho ${playerName}`);
-      }
+    const ws = clients.get(playerName);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        action: "setMauBinhArrangement",
+        data: { cards }
+      }));
+      mainWindow.webContents.send("logStatus", `Đã áp dụng xếp bài cho ${playerName}`);
+    }
   });
 
   mainWindow.on("closed", () => {
