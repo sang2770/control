@@ -132,11 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const playerList = document.getElementById("playerList");
-  const maubinhModal = document.getElementById("maubinhModal");
-  const closeModal = document.getElementById("closeModal");
-  const modalPlayerName = document.getElementById("modalPlayerName");
-  const solutionsList = document.getElementById("solutionsList");
-
   let playersData = {}; // Store solutions per player
 
   // Render player list
@@ -160,11 +155,11 @@ document.addEventListener("DOMContentLoaded", () => {
       logStatus(`Chưa có dữ liệu bài cho ${playerName}`);
       return;
     }
-    
+
     // Open a new Electron window instead of showing a local modal
     ipcRenderer.send("openSolverWindow", {
-        playerName,
-        solutions
+      playerName,
+      solutions
     });
   };
 
