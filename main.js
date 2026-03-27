@@ -7,6 +7,7 @@ const WebSocket = require("ws");
 let actionRunning = null;
 
 let mainWindow;
+const solverWindows = new Map();
 
 function savePortToConfig(port) {
   let baseDir = "";
@@ -92,13 +93,18 @@ async function createWindow() {
           } else if (data.action === "updateUserStatus" && data.userStatus) {
             const status = data.userStatus;
 
-            // Check if it's Mau Binh solutions
             if (status && status.type === "MAUBINH_SOLUTIONS") {
               if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send("mauBinhSolutions", {
                   playerName: clientName,
                   solutions: status.solutions
                 });
+              }
+              if (solverWindows.has(clientName)) {
+                const sWin = solverWindows.get(clientName);
+                if (!sWin.isDestroyed()) {
+                  sWin.webContents.send('init-data', { playerName: clientName, solutions: status.solutions });
+                }
               }
             } else {
               mainWindow.webContents.send(
@@ -176,6 +182,15 @@ async function createWindow() {
 
   // Handle opening solver window for a specific player
   ipcMain.on("openSolverWindow", (event, { playerName, solutions }) => {
+    if (solverWindows.has(playerName)) {
+      const existingWin = solverWindows.get(playerName);
+      if (!existingWin.isDestroyed()) {
+        existingWin.focus();
+        existingWin.webContents.send('init-data', { playerName, solutions });
+        return;
+      }
+    }
+
     const solverWin = new BrowserWindow({
       width: 900,
       height: 650,
@@ -184,6 +199,12 @@ async function createWindow() {
         nodeIntegration: true,
         contextIsolation: false,
       },
+    });
+
+    solverWindows.set(playerName, solverWin);
+
+    solverWin.on('closed', () => {
+      solverWindows.delete(playerName);
     });
 
     solverWin.loadFile("solver.html");
