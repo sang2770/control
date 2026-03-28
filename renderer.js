@@ -22,10 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const joinDelayInput = document.getElementById("joinDelay");
   const checkDelayInput = document.getElementById("checkDelay");
   const selectedTableInput = document.getElementById("selectedTable");
-  const actionSelect = document.getElementById("actionSelect");
-  const joinRoomToggleButton = document.getElementById("joinRoomToggle");
+  const btnJoinTable = document.getElementById("btnJoinTable");
+  const btnCreateTable = document.getElementById("btnCreateTable");
+  const btnLeaveTable = document.getElementById("btnLeaveTable");
+  let activeAction = null; // 'join' or 'create' or null
   const statusLog = document.getElementById("statusLog");
-  let isJoining = false;
 
   // Hàm lưu cấu hình vào localStorage
   const saveToLocalStorage = (config) => {
@@ -44,10 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (savedConfig) {
         const config = JSON.parse(savedConfig);
         systemKeysInput.value = config.systemKeys.join(",");
-        joinDelayInput.value = config.joinDelay;
-        checkDelayInput.value = config.checkDelay;
+        joinDelayInput.value = Math.max(3000, config.joinDelay || 3000);
+        checkDelayInput.value = Math.max(3000, config.checkDelay || 3000);
         selectedTableInput.value = config.selectedTable;
-        actionSelect.value = config.actionSelect || "joinTable";
         logStatus("Đã tải cấu hình từ localStorage");
         return config;
       }
@@ -72,18 +72,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Hàm lưu cấu hình
   const saveSettings = () => {
-    const joinDelay = parseInt(joinDelayInput.value) || 1000;
-    const checkDelay = parseInt(checkDelayInput.value) || 1000;
+    const joinDelay = Math.max(3000, parseInt(joinDelayInput.value) || 3000);
+    const checkDelay = Math.max(3000, parseInt(checkDelayInput.value) || 3000);
     const selectedTable = selectedTableInput.value;
     const systemKeys = getSystemKeys();
-    const action = actionSelect.value;
-
     const config = {
       joinDelay,
       checkDelay,
       selectedTable,
       systemKeys,
-      actionSelect: action,
     };
 
     saveToLocalStorage(config);
@@ -99,36 +96,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Tải cấu hình khi trang được tải
   loadFromLocalStorage();
+  saveSettings();
 
   // Auto-save on input changes
   systemKeysInput.addEventListener("input", debouncedSaveSettings);
   joinDelayInput.addEventListener("input", debouncedSaveSettings);
   checkDelayInput.addEventListener("input", debouncedSaveSettings);
   selectedTableInput.addEventListener("change", debouncedSaveSettings);
-  actionSelect.addEventListener("change", debouncedSaveSettings);
 
-  // Toggle start/stop action
-  joinRoomToggleButton.addEventListener("click", () => {
-    isJoining = !isJoining;
-    const selectedAction = actionSelect.value;
-    if (isJoining) {
-      ipcRenderer.send("broadcast", { action: selectedAction });
-      joinRoomToggleButton.textContent = "Dừng";
-      joinRoomToggleButton.style.backgroundColor = "red";
-      logStatus(
-        `Đã gửi lệnh ${selectedAction === "joinTable" ? "vào bàn" : "tạo bàn"}`
-      );
+  const resetButtons = () => {
+    btnJoinTable.textContent = "Vào Bàn";
+    btnJoinTable.style.backgroundColor = "#007bff";
+    btnCreateTable.textContent = "Tạo Bàn";
+    btnCreateTable.style.backgroundColor = "#28a745";
+    activeAction = null;
+  };
+
+  btnJoinTable.addEventListener("click", () => {
+    if (activeAction === "join") {
+      ipcRenderer.send("broadcast", { action: "stopJoinTable", isStop: true });
+      resetButtons();
+      logStatus("Đã dừng vào bàn");
     } else {
-      if (currentAction === "joinTable") {
-        ipcRenderer.send("broadcast", { action: "stopJoinTable", isStop: true });
-      } else {
-        ipcRenderer.send("broadcast", { action: "leaveTable", isStop: true });
+      if (activeAction === "create") {
+        ipcRenderer.send("broadcast", { action: "stopCreateTable", isStop: true });
       }
-      joinRoomToggleButton.textContent = "Bắt Đầu";
-      joinRoomToggleButton.style.backgroundColor = "green";
-      logStatus("Đã gửi lệnh dừng");
+      activeAction = "join";
+      ipcRenderer.send("broadcast", { action: "joinTable" });
+      btnJoinTable.textContent = "Dừng Vào Bàn";
+      btnJoinTable.style.backgroundColor = "red";
+      btnCreateTable.textContent = "Tạo Bàn";
+      btnCreateTable.style.backgroundColor = "#28a745";
+      logStatus("Bắt đầu vào bàn");
     }
-    currentAction = selectedAction;
+  });
+
+  btnCreateTable.addEventListener("click", () => {
+    if (activeAction === "create") {
+      ipcRenderer.send("broadcast", { action: "stopCreateTable", isStop: true });
+      resetButtons();
+      logStatus("Đã dừng tạo bàn");
+    } else {
+      if (activeAction === "join") {
+        ipcRenderer.send("broadcast", { action: "stopJoinTable", isStop: true });
+      }
+      activeAction = "create";
+      ipcRenderer.send("broadcast", { action: "createTable" });
+      btnCreateTable.textContent = "Dừng Tạo Bàn";
+      btnCreateTable.style.backgroundColor = "red";
+      btnJoinTable.textContent = "Vào Bàn";
+      btnJoinTable.style.backgroundColor = "#007bff";
+      logStatus("Bắt đầu tạo bàn");
+    }
+  });
+
+  btnLeaveTable.addEventListener("click", () => {
+    ipcRenderer.send("broadcast", { action: "leaveTable", isStop: true });
+    resetButtons();
+    logStatus("Đã rời bàn");
   });
 
   const playerList = document.getElementById("playerList");

@@ -5,6 +5,7 @@ const fs = require("fs");
 const WebSocket = require("ws");
 
 let actionRunning = null;
+let lastConfig = null;
 let mainWindow;
 const solverWindows = new Map();
 const clients = new Map();
@@ -53,11 +54,15 @@ ipcMain.on("sendToPlayer", (event, { playerName, message }) => {
 });
 
 ipcMain.on("broadcast", (event, message) => {
-  actionRunning = message.action;
-  broadcast(message);
-  if (message.isStop) {
-    actionRunning = null;
+  if (message.action === "saveSettings") {
+    lastConfig = message;
+  } else {
+    actionRunning = message.action;
+    if (message.isStop) {
+      actionRunning = null;
+    }
   }
+  broadcast(message);
 });
 
 ipcMain.on("openSolverWindow", (event, { playerName, solutions }) => {
@@ -153,6 +158,9 @@ async function createWindow() {
               }
 
               setTimeout(() => {
+                if (lastConfig) {
+                  ws.send(JSON.stringify(lastConfig));
+                }
                 if (actionRunning) {
                   ws.send(JSON.stringify({ action: actionRunning }));
                 }
