@@ -3,8 +3,10 @@ const { findFreePort } = require("./initSocket");
 const path = require("path");
 const fs = require("fs");
 const WebSocket = require("ws");
+const MauBinhLogic = require("./mau_binh_logic.js");
 
 let actionRunning = null;
+let rooms = {};
 
 let mainWindow;
 
@@ -74,7 +76,7 @@ async function createWindow() {
           if (data.action === "updateSystemKey" && data.systemKey) {
             clientName = data.systemKey;
             clients.set(clientName, ws);
-            
+
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send("updateSystemKeys", [data.systemKey]);
               mainWindow.webContents.send("updatePlayerList", Array.from(clients.keys()));
@@ -91,9 +93,70 @@ async function createWindow() {
             }, 1500);
           } else if (data.action === "updateUserStatus" && data.userStatus) {
             const status = data.userStatus;
-            
-            // Check if it's Mau Binh solutions
-            if (status && status.type === "MAUBINH_SOLUTIONS") {
+
+            if (status.type === "MAUBINH_MONITOR_ROOMDATA") {
+              const { roomId, players, systemKeys } = status;
+              if (!roomId) return;
+
+              if (!rooms[roomId]) rooms[roomId] = { players: {}, cardsKnown: new Set(), guests: null };
+
+              const systemPlayersInRoom = players.filter(p => systemKeys.includes(p.dn));
+              if (systemPlayersInRoom.length === 3 && players.length === 4) {
+                const guestPlayer = players.find(p => !systemKeys.includes(p.dn));
+                if (guestPlayer) {
+                  rooms[roomId].guests = guestPlayer.dn;
+                }
+              }
+            } else if (status.type === "MAUBINH_MONITOR_GAME_END") {
+              const { roomId } = status;
+              if (roomId && rooms[roomId]) {
+                delete rooms[roomId]; // Clear room state
+              }
+            } else if (status.type === "MAUBINH_PLAYER_CARDS_REPORT") {
+              const { playerName, roomId, cards } = status;
+
+              // Solve for the player immediately
+              const solutions = MauBinhLogic.solveMauBinh(cards, 50);
+              if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send("mauBinhSolutions", {
+                  playerName: playerName,
+                  solutions: solutions
+                });
+              }
+
+              if (roomId) {
+                if (!rooms[roomId]) rooms[roomId] = { players: {}, cardsKnown: new Set(), guests: null };
+                rooms[roomId].players[playerName] = cards;
+                cards.forEach(c => rooms[roomId].cardsKnown.add(c));
+
+                // Check if we have 3 system players' cards and know the guest
+                const numSystemPlayers = Object.keys(rooms[roomId].players).length;
+                if (numSystemPlayers === 3 && rooms[roomId].cardsKnown.size === 39 && rooms[roomId].guests) {
+                  // Find guest's cards
+                  let guestCards = [];
+                  for (let i = 0; i < 52; i++) {
+                    if (!rooms[roomId].cardsKnown.has(i)) {
+                      guestCards.push(i);
+                    }
+                  }
+
+                  if (guestCards.length === 13) {
+                    const guestSolutions = MauBinhLogic.solveMauBinh(guestCards, 50);
+                    guestSolutions.isGuest = true;
+
+                    if (mainWindow && !mainWindow.isDestroyed()) {
+                      mainWindow.webContents.send("mauBinhSolutions", {
+                        playerName: rooms[roomId].guests,
+                        solutions: guestSolutions
+                      });
+                    }
+
+                    // Clear known cards to avoid re-triggering guest solving multiple times
+                    rooms[roomId].cardsKnown.clear();
+                  }
+                }
+              }
+            } else if (status && status.type === "MAUBINH_SOLUTIONS") {
               if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send("mauBinhSolutions", {
                   playerName: clientName,
@@ -137,11 +200,11 @@ async function createWindow() {
 
     // Integrated targeted send in broadcast logic or new IPC
     ipcMain.on("sendToPlayer", (event, { playerName, message }) => {
-       const ws = clients.get(playerName);
-       if (ws && ws.readyState === WebSocket.OPEN) {
-         ws.send(JSON.stringify(message));
-         console.log(`Sent to ${playerName}:`, message.action);
-       }
+      const ws = clients.get(playerName);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+        console.log(`Sent to ${playerName}:`, message.action);
+      }
     });
 
   } catch (error) {
@@ -196,14 +259,14 @@ async function createWindow() {
 
   // Handle arrangement application from the solver window
   ipcMain.on("apply-arrangement", (event, { playerName, cards }) => {
-      const ws = clients.get(playerName);
-      if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-              action: "setMauBinhArrangement",
-              data: { cards }
-          }));
-          mainWindow.webContents.send("logStatus", `Đã áp dụng xếp bài cho ${playerName}`);
-      }
+    const ws = clients.get(playerName);
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        action: "setMauBinhArrangement",
+        data: { cards }
+      }));
+      mainWindow.webContents.send("logStatus", `Đã áp dụng xếp bài cho ${playerName}`);
+    }
   });
 
   mainWindow.on("closed", () => {
