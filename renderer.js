@@ -1,4 +1,5 @@
 const { ipcRenderer } = require("electron");
+const { solveMauBinh } = require("./mau_binh_logic.js");
 let currentAction = null;
 // Simple debounce function
 function debounce(func, wait) {
@@ -157,7 +158,95 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const playerList = document.getElementById("playerList");
-  let playersData = {}; // Store solutions per player
+  const solverGroup = document.getElementById("solverGroup");
+  let playersData = {}; // { playerName: { solutions: [], selectedIndex: 0 } }
+  let allConnectedPlayers = [];
+
+  const renderCardsHtml = (cardsStr) => {
+    return cardsStr.map(cardStr => {
+      const suit = cardStr.slice(-1);
+      const value = cardStr.slice(0, -1);
+      const isRed = (suit === '♦' || suit === '♥');
+      return `<span class="playing-card ${isRed ? 'red' : ''}">${value}${suit}</span>`;
+    }).join('');
+  };
+
+  const getHighlightClass = (loai) => {
+    if (["Thùng Phá Sảnh", "Tứ Quí"].includes(loai)) return 'special-gold';
+    if (["3 cái Thùng", "3 cái Sảnh"].includes(loai)) return 'special-cyan';
+    return '';
+  };
+
+  const renderSolvers = () => {
+    solverGroup.innerHTML = "";
+    Object.keys(playersData).forEach(playerName => {
+      const data = playersData[playerName];
+      if (!data.solutions || data.solutions.length === 0) return;
+
+      const isGuest = data.solutions.isGuest || false;
+      const solverCard = document.createElement("div");
+      solverCard.className = "player-solver-card";
+
+      let solutionsHtml = data.solutions.map((sol, index) => `
+        <div class="solution-item ${data.selectedIndex === index ? 'selected' : ''}" 
+             onclick="selectSolutionForPlayer('${playerName}', ${index})">
+          <div><b>#${index + 1}</b></div>
+          <div style="display:flex; justify-content:space-between; font-size:0.85em;">
+            <span class="${getHighlightClass(sol.chi1.loai)}">${sol.chi1.loai}</span>
+            <span class="${getHighlightClass(sol.chi2.loai)}">${sol.chi2.loai}</span>
+            <span class="${getHighlightClass(sol.chi3.loai)}">${sol.chi3.loai}</span>
+          </div>
+        </div>
+      `).join('');
+
+      const selectedSol = data.solutions[data.selectedIndex] || data.solutions[0];
+      const previewHtml = selectedSol ? `
+        <div class="chi-row">
+          <span class="chi-header">Chi 1 (3):</span>
+          <div class="card-list">${renderCardsHtml(selectedSol.chi1.cards)}</div>
+        </div>
+        <div class="chi-row">
+          <span class="chi-header">Chi 2 (5):</span>
+          <div class="card-list">${renderCardsHtml(selectedSol.chi2.cards)}</div>
+        </div>
+        <div class="chi-row">
+          <span class="chi-header">Chi 3 (5):</span>
+          <div class="card-list">${renderCardsHtml(selectedSol.chi3.cards)}</div>
+        </div>
+      ` : '<p>Chọn một phương án</p>';
+
+      solverCard.innerHTML = `
+        <div class="player-solver-header">
+          <span class="player-name ${isGuest ? 'is-guest' : ''}">${isGuest ? '[DỰ ĐOÁN] ' : ''}${playerName}</span>
+          ${!isGuest ? `<button class="btn-apply" onclick="applyArrangementForPlayer('${playerName}')">Áp Dụng</button>` : ''}
+        </div>
+        <div class="solver-layout">
+          <div class="solutions-list">${solutionsHtml}</div>
+          <div class="solution-preview-pane">${previewHtml}</div>
+        </div>
+      `;
+      solverGroup.appendChild(solverCard);
+    });
+  };
+
+  window.selectSolutionForPlayer = (playerName, index) => {
+    if (playersData[playerName]) {
+      playersData[playerName].selectedIndex = index;
+      renderSolvers();
+    }
+  };
+
+  window.applyArrangementForPlayer = (playerName) => {
+    const data = playersData[playerName];
+    if (!data || data.selectedIndex === -1) return;
+    const sol = data.solutions[data.selectedIndex];
+    const cards = [
+      ...sol.chi1.cardIds,
+      ...sol.chi2.cardIds,
+      ...sol.chi3.cardIds
+    ];
+    ipcRenderer.send("apply-arrangement", { playerName, cards });
+  };
 
   // Render player list
   const renderPlayers = (names) => {
@@ -165,43 +254,70 @@ document.addEventListener("DOMContentLoaded", () => {
     names.forEach(name => {
       const card = document.createElement("div");
       card.className = "player-card";
-      if (playersData[name] && playersData[name].length > 0) {
+      if (playersData[name] && playersData[name].solutions && playersData[name].solutions.length > 0) {
         card.classList.add("has-cards");
       }
       card.textContent = name;
-      card.onclick = () => showMauBinhModal(name);
       playerList.appendChild(card);
     });
   };
 
-  const showMauBinhModal = (playerName) => {
-    const solutions = playersData[playerName] || [];
-    if (solutions.length === 0) {
-      logStatus(`Chưa có dữ liệu bài cho ${playerName}`);
-      return;
-    }
-
-    // Open a new Electron window instead of showing a local modal
-    ipcRenderer.send("openSolverWindow", {
-      playerName,
-      solutions
-    });
-  };
-
-  // setArrangement logic moved to main.js and solver_renderer.js (solver.html)
-
   ipcRenderer.on("updatePlayerList", (event, names) => {
+    allConnectedPlayers = names;
     renderPlayers(names);
   });
 
-  ipcRenderer.on("mauBinhSolutions", (event, { playerName, solutions }) => {
-    playersData[playerName] = solutions;
+  const handleMauBinhSolutions = (playerName, solutions) => {
+    playersData[playerName] = {
+      solutions: solutions,
+      selectedIndex: solutions.length > 0 ? 0 : -1
+    };
     logStatus(`Đã nhận ${solutions.length} phương án xếp bài cho ${playerName}`);
-    renderPlayers(Object.keys(playersData).length ? Object.keys(playersData) : [playerName]);
+
+    // Merge guest players into the list if they are not in connected players
+    const currentList = [...allConnectedPlayers];
+    if (!currentList.includes(playerName)) {
+      currentList.push(playerName);
+    }
+    renderPlayers(currentList);
+    renderSolvers();
+  };
+
+  ipcRenderer.on("mauBinhSolutions", (event, { playerName, solutions }) => {
+    handleMauBinhSolutions(playerName, solutions);
+  });
+
+  const btnFakeData = document.getElementById("btnFakeData");
+  btnFakeData.addEventListener("click", () => {
+    const fakePlayers = ["Bot_Hên", "Bot_VIP", "Guest_999"];
+    let usedCards = new Set();
+    const allCards = Array.from({ length: 52 }, (_, i) => i);
+
+    fakePlayers.forEach((name, i) => {
+      let available = allCards.filter(c => !usedCards.has(c));
+      const shuffled = available.sort(() => 0.5 - Math.random());
+      const cards = shuffled.slice(0, 13);
+      cards.forEach(c => usedCards.add(c));
+
+      // solveMauBinh is available from mau_binh_logic.js loaded in index.html
+      const solutions = solveMauBinh(cards);
+      if (name.includes("Guest")) solutions.isGuest = true;
+
+      handleMauBinhSolutions(name, solutions);
+    });
+    logStatus("Đã tạo dữ liệu giả cho 3 người chơi");
   });
 
   ipcRenderer.on("logStatus", (event, message) => {
     logStatus(message);
+  });
+
+  const btnClearSolvers = document.getElementById("btnClearSolvers");
+  btnClearSolvers.addEventListener("click", () => {
+    playersData = {};
+    renderPlayers(Array.from(document.querySelectorAll("#playerList .player-card")).map(el => el.textContent));
+    renderSolvers();
+    logStatus("Đã xóa tất cả phương án xếp bài");
   });
 
   // Xử lý cập nhật systemKeys từ main process

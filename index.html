@@ -15,96 +15,95 @@
 </head>
 
 <body>
-  <div>
-    <label for="systemKeys">Danh sách key hợp lệ (phân cách bằng dấu phẩy):</label>
-    <textarea style="width: 96%" id="systemKeys" placeholder="Enter system keys (e.g., a,b,c)"></textarea>
-  </div>
-  <div class="d-flex" style="gap: 10px">
+  <div class="container">
     <div>
-      <label for="joinDelay">Delay Vào Bàn (ms):</label>
-      <input type="number" id="joinDelay" placeholder="Enter delay in ms" min="3000" />
+      <label for="systemKeys">Danh sách key hợp lệ (phân cách bằng dấu phẩy):</label>
+      <textarea style="width: 96%" id="systemKeys" placeholder="Enter system keys (e.g., a,b,c)"></textarea>
+    </div>
+    <div class="d-flex" style="gap: 10px">
+      <div>
+        <label for="joinDelay">Delay Vào Bàn (ms):</label>
+        <input type="number" id="joinDelay" placeholder="Enter delay in ms" min="3000" />
+      </div>
+      <div>
+        <label for="checkDelay">Delay Check Tên (ms):</label>
+        <input type="number" id="checkDelay" placeholder="Enter delay in ms" min="3000" />
+      </div>
+      <div style="flex: 1">
+        <label for="selectedTable">Chọn Bàn Tiền:</label>
+        <select id="selectedTable" style="width: 100%">
+          <option value="100">100</option>
+          <option value="500">500</option>
+          <option value="1000">1K</option>
+          <option value="2000">2K</option>
+          <option value="5000">5K</option>
+          <option value="10000">10K</option>
+          <option value="20000">20K</option>
+          <option value="50000">50K</option>
+          <option value="100000">100K</option>
+          <option value="200000">200K</option>
+          <option value="500000">500K</option>
+          <option value="1000000">1M</option>
+          <option value="2000000">2M</option>
+          <option value="5000000">5M</option>
+          <option value="10000000">10M</option>
+        </select>
+      </div>
+    </div>
+    <div class="d-flex" style="gap: 10px; margin-top: 10px;">
+      <button id="btnJoinTable"
+        style="flex: 1; height: 40px; background-color: #007bff; color: white; font-weight: bold;">Vào Bàn</button>
+      <button id="btnCreateTable"
+        style="flex: 1; height: 40px; background-color: #28a745; color: white; font-weight: bold;">Tạo Bàn</button>
+      <button id="btnLeaveTable"
+        style="flex: 1; height: 40px; background-color: #dc3545; color: white; font-weight: bold;">Rời Bàn</button>
+    </div>
+
+    <div id="playerListSection" style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+      <strong>Người chơi đang kết nối:</strong>
+      <div id="playerList" class="d-flex" style="margin-top: 5px;">
+        <!-- Players will be added here -->
+      </div>
+    </div>
+
+    <div id="solverSection" style="margin-top: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong>Xếp bài Mậu Binh:</strong>
+        <div style="display: flex; gap: 5px;">
+          <button id="btnClearSolvers" style="background-color: #6c757d; font-size: 10px; padding: 2px 5px;">Xóa phương
+            án</button>
+        </div>
+      </div>
+      <div id="solverGroup" class="solver-group">
+        <!-- Solvers for each player will be rendered here -->
+      </div>
+    </div>
+
+    <div id="note">
+      <p>
+        <strong>Chú ý: Ở lại bàn trong 2 trường hợp</strong>
+      </p>
+      <ul>
+        <li>
+          <p>
+            <strong>1. </strong>
+            <span> Mình là chủ bàn và có key lạ đang đánh </span>
+          </p>
+        </li>
+        <li>
+          <p>
+            <strong>2. </strong>
+            <span> Key lạ là chủ bàn và có key hệ thống trong bàn </span>
+          </p>
+        </li>
+      </ul>
     </div>
     <div>
-      <label for="checkDelay">Delay Check Tên (ms):</label>
-      <input type="number" id="checkDelay" placeholder="Enter delay in ms" min="3000" />
-    </div>
-    <div style="flex: 1">
-      <label for="selectedTable">Chọn Bàn Tiền:</label>
-      <select id="selectedTable" style="width: 100%">
-        <option value="100">100</option>
-        <option value="500">500</option>
-        <option value="1000">1K</option>
-        <option value="2000">2K</option>
-        <option value="5000">5K</option>
-        <option value="10000">10K</option>
-        <option value="20000">20K</option>
-        <option value="50000">50K</option>
-        <option value="100000">100K</option>
-        <option value="200000">200K</option>
-        <option value="500000">500K</option>
-        <option value="1000000">1M</option>
-        <option value="2000000">2M</option>
-        <option value="5000000">5M</option>
-        <option value="10000000">10M</option>
-      </select>
-    </div>
-  </div>
-  <div class="d-flex" style="gap: 10px; margin-top: 10px;">
-    <button id="btnJoinTable" style="flex: 1; height: 40px; background-color: #007bff; color: white; font-weight: bold;">Vào Bàn</button>
-    <button id="btnCreateTable" style="flex: 1; height: 40px; background-color: #28a745; color: white; font-weight: bold;">Tạo Bàn</button>
-    <button id="btnLeaveTable" style="flex: 1; height: 40px; background-color: #dc3545; color: white; font-weight: bold;">Rời Bàn</button>
-  </div>
-
-  <div id="playerListSection" style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
-    <strong>Người chơi đang kết nối:</strong>
-    <div id="playerList" class="d-flex" style="margin-top: 5px;">
-      <!-- Players will be added here -->
+      <label>Trạng thái:</label>
+      <textarea id="statusLog" readonly style="width: 96%; height: 100px"></textarea>
     </div>
   </div>
 
-  <div id="note">
-    <p>
-      <strong>Chú ý: Ở lại bàn trong 2 trường hợp</strong>
-    </p>
-    <ul>
-      <li>
-        <p>
-          <strong>1. </strong>
-          <span> Mình là chủ bàn và có key lạ đang đánh </span>
-        </p>
-      </li>
-      <li>
-        <p>
-          <strong>2. </strong>
-          <span> Key lạ là chủ bàn và có key hệ thống trong bàn </span>
-        </p>
-      </li>
-    </ul>
-  </div>
-  <div>
-    <label>Trạng thái:</label>
-    <textarea id="statusLog" readonly style="width: 96%; height: 100px"></textarea>
-  </div>
-
-  <style>
-    .player-card {
-      background: #eee;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 1px solid #bbb;
-    }
-
-    .player-card:hover {
-      background: #ddd;
-    }
-
-    .player-card.has-cards {
-      background: #4caf50;
-      color: white;
-      border-color: #2e7d32;
-    }
-  </style>
   <script src="renderer.js"></script>
 </body>
 

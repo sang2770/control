@@ -10,7 +10,6 @@ let rooms = {};
 
 let lastConfig = null;
 let mainWindow;
-const solverWindows = new Map();
 const clients = new Map();
 let wss;
 
@@ -68,36 +67,7 @@ ipcMain.on("broadcast", (event, message) => {
   broadcast(message);
 });
 
-ipcMain.on("openSolverWindow", (event, { playerName, solutions }) => {
-  if (solverWindows.has(playerName)) {
-    const existingWin = solverWindows.get(playerName);
-    if (!existingWin.isDestroyed()) {
-      existingWin.focus();
-      existingWin.webContents.send('init-data', { playerName, solutions });
-      return;
-    }
-  }
-
-  const solverWin = new BrowserWindow({
-    width: 900,
-    height: 650,
-    title: `Mau Binh Solver - ${playerName}`,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  });
-
-  solverWindows.set(playerName, solverWin);
-  solverWin.on('closed', () => {
-    solverWindows.delete(playerName);
-  });
-
-  solverWin.loadFile("solver.html");
-  solverWin.webContents.on('did-finish-load', () => {
-    solverWin.webContents.send('init-data', { playerName, solutions });
-  });
-});
+// Solver window logic removed as it's now integrated into the main window
 
 ipcMain.on("apply-arrangement", (event, { playerName, cards }) => {
   const ws = clients.get(playerName);
@@ -114,8 +84,8 @@ ipcMain.on("apply-arrangement", (event, { playerName, cards }) => {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 560,
-    height: 450,
+    width: 650,
+    height: 800,
     webPreferences: {
       preload: path.join(__dirname, "renderer.js"),
       nodeIntegration: true,
@@ -164,7 +134,7 @@ async function createWindow() {
               }, 1500);
             } else if (data.action === "updateUserStatus" && data.userStatus) {
               const status = data.userStatus;
-              
+
               if (status.type === "MAUBINH_MONITOR_ROOMDATA") {
                 const { roomId, players, systemKeys } = status;
                 if (!roomId) return;
@@ -228,12 +198,6 @@ async function createWindow() {
                     playerName: clientName,
                     solutions: status.solutions
                   });
-                }
-                if (solverWindows.has(clientName)) {
-                  const sWin = solverWindows.get(clientName);
-                  if (!sWin.isDestroyed()) {
-                    sWin.webContents.send('init-data', { playerName: clientName, solutions: status.solutions });
-                  }
                 }
               } else {
                 if (mainWindow && !mainWindow.isDestroyed()) {
