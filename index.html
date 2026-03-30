@@ -22,11 +22,11 @@
   <div class="d-flex" style="gap: 10px">
     <div>
       <label for="joinDelay">Delay Vào Bàn (ms):</label>
-      <input type="number" id="joinDelay" placeholder="Enter delay in ms" min="0" />
+      <input type="number" id="joinDelay" placeholder="Enter delay in ms" min="3000" />
     </div>
     <div>
       <label for="checkDelay">Delay Check Tên (ms):</label>
-      <input type="number" id="checkDelay" placeholder="Enter delay in ms" min="0" />
+      <input type="number" id="checkDelay" placeholder="Enter delay in ms" min="3000" />
     </div>
     <div style="flex: 1">
       <label for="selectedTable">Chọn Bàn Tiền:</label>
@@ -49,19 +49,11 @@
       </select>
     </div>
   </div>
-  <div class="d-flex" style="gap: 10px">
-    <div>
-      <label for="actionSelect">Hành động:</label>
-      <select id="actionSelect" style="width: 200px">
-        <option value="joinTable">Vào Bàn</option>
-        <option value="createTable">Tạo Bàn</option>
-      </select>
-    </div>
+  <div class="d-flex" style="gap: 10px; margin-top: 10px;">
+    <button id="btnJoinTable" style="flex: 1; height: 40px; background-color: #007bff; color: white; font-weight: bold;">Vào Bàn</button>
+    <button id="btnCreateTable" style="flex: 1; height: 40px; background-color: #28a745; color: white; font-weight: bold;">Tạo Bàn</button>
+    <button id="btnLeaveTable" style="flex: 1; height: 40px; background-color: #dc3545; color: white; font-weight: bold;">Rời Bàn</button>
   </div>
-
-  <button id="joinRoomToggle" style="background-color: green; color: white; width: 100%">
-    Bắt Đầu
-  </button>
 
   <div id="playerListSection" style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
     <strong>Người chơi đang kết nối:</strong>
