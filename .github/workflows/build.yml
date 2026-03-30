@@ -60,6 +60,7 @@ jobs:
           name: Auto Control v${{ github.run_number }}
           files: |
             dist/**/*.exe
+            *.zip
           draft: false
           prerelease: false
           body: |
