@@ -128,6 +128,9 @@ async function createWindow() {
               }
 
               setTimeout(() => {
+                if (lastConfig) {
+                  ws.send(JSON.stringify(lastConfig));
+                }
                 if (actionRunning) {
                   ws.send(JSON.stringify({ action: actionRunning }));
                 }
@@ -136,22 +139,21 @@ async function createWindow() {
               const status = data.userStatus;
 
               if (status.type === "MAUBINH_MONITOR_ROOMDATA") {
-                const { roomId, players, systemKeys } = status;
+                const { roomId, players } = status;
                 if (!roomId) return;
 
-                if (!rooms[roomId]) rooms[roomId] = { players: {}, cardsKnown: new Set(), guests: null };
-
-                const systemPlayersInRoom = players.filter(p => systemKeys.includes(p.dn));
-                if (systemPlayersInRoom.length === 3 && players.length === 4) {
-                  const guestPlayer = players.find(p => !systemKeys.includes(p.dn));
-                  if (guestPlayer) {
-                    rooms[roomId].guests = guestPlayer.dn;
-                  }
+                if (!rooms[roomId]) {
+                  rooms[roomId] = { players: {}, roomPlayers: [] };
                 }
+                // Store list of all players currently in the room
+                rooms[roomId].roomPlayers = players.map(p => p.dn);
               } else if (status.type === "MAUBINH_MONITOR_GAME_END") {
                 const { roomId } = status;
                 if (roomId && rooms[roomId]) {
                   delete rooms[roomId];
+                }
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send("clearMauBinhSolutions");
                 }
               } else if (status.type === "MAUBINH_PLAYER_CARDS_REPORT") {
                 const { playerName, roomId, cards } = status;
@@ -165,30 +167,48 @@ async function createWindow() {
                 }
 
                 if (roomId) {
-                  if (!rooms[roomId]) rooms[roomId] = { players: {}, cardsKnown: new Set(), guests: null };
+                  if (!rooms[roomId]) {
+                    rooms[roomId] = { players: {}, roomPlayers: [] };
+                  }
+
+                  // Track cards for this player
                   rooms[roomId].players[playerName] = cards;
-                  cards.forEach(c => rooms[roomId].cardsKnown.add(c));
 
-                  const numSystemPlayers = Object.keys(rooms[roomId].players).length;
-                  if (numSystemPlayers === 3 && rooms[roomId].cardsKnown.size === 39 && rooms[roomId].guests) {
-                    let guestCards = [];
-                    for (let i = 0; i < 52; i++) {
-                      if (!rooms[roomId].cardsKnown.has(i)) {
-                        guestCards.push(i);
+                  // If we have cards for 3 players and there are 4 players total in the room,
+                  // we can deduce the 4th player's cards (the guest).
+                  const reportedPlayersNames = Object.keys(rooms[roomId].players);
+                  if (reportedPlayersNames.length === 3 && rooms[roomId].roomPlayers && rooms[roomId].roomPlayers.length === 4) {
+
+                    // Identify known cards to deduce remaining cards
+                    const knownCards = new Set();
+                    reportedPlayersNames.forEach(name => {
+                      rooms[roomId].players[name].forEach(c => knownCards.add(c));
+                    });
+
+                    // Only proceed if we have 39 unique cards (13 * 3)
+                    if (knownCards.size === 39) {
+                      let guestCards = [];
+                      for (let i = 0; i < 52; i++) {
+                        if (!knownCards.has(i)) {
+                          guestCards.push(i);
+                        }
                       }
-                    }
 
-                    if (guestCards.length === 13) {
-                      const guestSolutions = MauBinhLogic.solveMauBinh(guestCards, 50);
-                      guestSolutions.isGuest = true;
+                      if (guestCards.length === 13) {
+                        // Find the guest's name (the one in room but hasn't reported cards)
+                        const guestName = rooms[roomId].roomPlayers.find(dn => !rooms[roomId].players[dn]);
+                        if (guestName) {
+                          const guestSolutions = MauBinhLogic.solveMauBinh(guestCards, 50);
+                          guestSolutions.isGuest = true;
 
-                      if (mainWindow && !mainWindow.isDestroyed()) {
-                        mainWindow.webContents.send("mauBinhSolutions", {
-                          playerName: rooms[roomId].guests,
-                          solutions: guestSolutions
-                        });
+                          if (mainWindow && !mainWindow.isDestroyed()) {
+                            mainWindow.webContents.send("mauBinhSolutions", {
+                              playerName: 'Khách ' + guestName,
+                              solutions: guestSolutions
+                            });
+                          }
+                        }
                       }
-                      rooms[roomId].cardsKnown.clear();
                     }
                   }
                 }

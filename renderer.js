@@ -191,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="solution-item ${data.selectedIndex === index ? 'selected' : ''}" 
              onclick="selectSolutionForPlayer('${playerName}', ${index})">
           <div><b>#${index + 1}</b></div>
-          <div style="display:flex; justify-content:space-between; font-size:0.85em;">
+          <div style="display:flex; justify-content:space-between; font-size:0.7em;">
             <span class="${getHighlightClass(sol.chi1.loai)}">${sol.chi1.loai}</span>
             <span class="${getHighlightClass(sol.chi2.loai)}">${sol.chi2.loai}</span>
             <span class="${getHighlightClass(sol.chi3.loai)}">${sol.chi3.loai}</span>
@@ -285,6 +285,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   ipcRenderer.on("mauBinhSolutions", (event, { playerName, solutions }) => {
     handleMauBinhSolutions(playerName, solutions);
+  });
+
+  ipcRenderer.on("clearMauBinhSolutions", () => {
+    playersData = {};
+    renderPlayers(allConnectedPlayers);
+    renderSolvers();
+    logStatus("Kết thúc ván. Đã xóa dữ liệu bài.");
   });
 
   const btnFakeData = document.getElementById("btnFakeData");

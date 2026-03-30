@@ -61,8 +61,8 @@ button:hover {
     background: #1a1a1a;
     color: #eee;
     border-radius: 8px;
-    padding: 10px;
-    width: 47%;
+    padding: 5px;
+    width: 45%;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
@@ -139,8 +139,9 @@ button:hover {
 
 .chi-header {
     font-weight: bold;
-    min-width: 80px;
+    min-width: 42px;
     color: #999;
+    font-size: 0.8em;
 }
 
 .card-list {
