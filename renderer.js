@@ -294,26 +294,26 @@ document.addEventListener("DOMContentLoaded", () => {
     logStatus("Kết thúc ván. Đã xóa dữ liệu bài.");
   });
 
-  const btnFakeData = document.getElementById("btnFakeData");
-  btnFakeData.addEventListener("click", () => {
-    const fakePlayers = ["Bot_Hên", "Bot_VIP", "Guest_999"];
-    let usedCards = new Set();
-    const allCards = Array.from({ length: 52 }, (_, i) => i);
+  // const btnFakeData = document.getElementById("btnFakeData");
+  // btnFakeData.addEventListener("click", () => {
+  //   const fakePlayers = ["Bot_Hên", "Bot_VIP", "Guest_999"];
+  //   let usedCards = new Set();
+  //   const allCards = Array.from({ length: 52 }, (_, i) => i);
 
-    fakePlayers.forEach((name, i) => {
-      let available = allCards.filter(c => !usedCards.has(c));
-      const shuffled = available.sort(() => 0.5 - Math.random());
-      const cards = shuffled.slice(0, 13);
-      cards.forEach(c => usedCards.add(c));
+  //   fakePlayers.forEach((name, i) => {
+  //     let available = allCards.filter(c => !usedCards.has(c));
+  //     const shuffled = available.sort(() => 0.5 - Math.random());
+  //     const cards = shuffled.slice(0, 13);
+  //     cards.forEach(c => usedCards.add(c));
 
-      // solveMauBinh is available from mau_binh_logic.js loaded in index.html
-      const solutions = solveMauBinh(cards);
-      if (name.includes("Guest")) solutions.isGuest = true;
+  //     // solveMauBinh is available from mau_binh_logic.js loaded in index.html
+  //     const solutions = solveMauBinh(cards);
+  //     if (name.includes("Guest")) solutions.isGuest = true;
 
-      handleMauBinhSolutions(name, solutions);
-    });
-    logStatus("Đã tạo dữ liệu giả cho 3 người chơi");
-  });
+  //     handleMauBinhSolutions(name, solutions);
+  //   });
+  //   logStatus("Đã tạo dữ liệu giả cho 3 người chơi");
+  // });
 
   ipcRenderer.on("logStatus", (event, message) => {
     logStatus(message);
@@ -329,6 +329,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Xử lý cập nhật systemKeys từ main process
   ipcRenderer.on("updateSystemKeys", (event, newSystemKeys) => {
+    console.log("updateSystemKeys", newSystemKeys);
+
     const currentSystemKeys = getSystemKeys();
     const newKeys = newSystemKeys.filter(
       (key) => !currentSystemKeys.includes(key)
