@@ -125,7 +125,6 @@ async function createWindow() {
                 mainWindow.webContents.send("updatePlayerList", Array.from(clients.keys()));
                 mainWindow.webContents.send("logStatus", `Đã cập nhật systemKey: ${data.systemKey}`);
               }
-
               setTimeout(() => {
                 if (lastConfig) {
                   ws.send(JSON.stringify(lastConfig));
@@ -136,22 +135,15 @@ async function createWindow() {
               }, 1500);
             } else if (data.action === "updateUserStatus" && data.userStatus) {
               const status = data.userStatus;
-
               if (status.type === "MAUBINH_MONITOR_ROOMDATA") {
                 const { players } = status;
+                mainWindow.webContents.send("logStatus", `Đã cập nhật roomData: ${JSON.stringify(players.map(p => p.dn))}`);
                 const systemKeys = Array.from(clients.keys());
-
-                // Tạo sessionKey từ danh sách 4 người chơi để định danh bàn
-                const sessionKey = players.map(p => p.dn).sort().join('|');
-
-                // Đồng bộ sessionKey và reset cards cho tất cả các máy khách hệ thống có mặt trong bàn này
+                // Reset cards cho các máy khách hệ thống có mặt trong bàn khi nhận roomData mới
                 players.forEach(p => {
                   const peerWs = clients.get(p.dn);
                   if (peerWs) {
-                    if (peerWs.sessionKey !== sessionKey) {
-                      peerWs.sessionKey = sessionKey;
-                      peerWs.currentCards = null;
-                    }
+                    peerWs.currentCards = null;
                   }
                 });
 
@@ -178,9 +170,8 @@ async function createWindow() {
                 }
               } else if (status.type === "MAUBINH_MONITOR_GAME_END") {
                 // Reset trạng thái ván đấu hiện tại của client này
-                ws.currentCards = null;
-                ws.currentGuest = null;
-                ws.sessionKey = null;
+                // ws.currentCards = null;
+                // ws.currentGuest = null;
                 // Clear UI solutions khi ván đấu kết thúc
                 if (mainWindow && !mainWindow.isDestroyed()) {
                   mainWindow.webContents.send("clearSolvers", {});
@@ -188,7 +179,6 @@ async function createWindow() {
               } else if (status.type === "MAUBINH_PLAYER_CARDS_REPORT") {
                 const { playerName, cards } = status;
                 ws.currentCards = cards;
-
                 const solutions = MauBinhLogic.solveMauBinh(cards, 50);
                 if (mainWindow && !mainWindow.isDestroyed()) {
                   mainWindow.webContents.send("mauBinhSolutions", {
@@ -196,17 +186,15 @@ async function createWindow() {
                     solutions: solutions
                   });
                 }
-
-                // Kiểm tra xem đã đủ 3 người chơi hệ thống trong cùng 1 session (cùng 1 bàn) chưa
-                if (ws.sessionKey) {
+                // Kiểm tra đủ 3 người chơi hệ thống theo cùng 1 khách (bàn 3-1)
+                if (ws.currentGuest) {
                   const peers = Array.from(clients.values()).filter(c =>
-                    c.sessionKey === ws.sessionKey &&
+                    c.currentGuest === ws.currentGuest &&
                     c.currentCards
                   );
-
                   if (peers.length === 3) {
                     const cardsKnown = new Set();
-                    let guestName = null;
+                    let guestName = ws.currentGuest;
 
                     peers.forEach(p => {
                       p.currentCards.forEach(c => cardsKnown.add(c));
@@ -234,7 +222,11 @@ async function createWindow() {
                         }
                       }
                     }
+
+                    window.webContents.send("logStatus", `Đã nhận đủ bài của 3 người chơi hệ thống theo khách ${ws.currentGuest}. Đang phân tích...`);
                   }
+                } else {
+                  window.webContents.send("logStatus", `Đã nhận bài của ${playerName} (${clientName || 'Unknown'}), nhưng chưa xác định được khách nào để dự đoán...`);
                 }
               } else if (status.type === "MAUBINH_SOLUTIONS") {
                 if (mainWindow && !mainWindow.isDestroyed()) {
