@@ -120,7 +120,10 @@ document.addEventListener("DOMContentLoaded", () => {
       logStatus("Đã dừng vào bàn");
     } else {
       if (activeAction === "create") {
-        ipcRenderer.send("broadcast", { action: "stopCreateTable", isStop: true });
+        ipcRenderer.send("broadcast", {
+          action: "stopCreateTable",
+          isStop: true,
+        });
       }
       activeAction = "join";
       ipcRenderer.send("broadcast", { action: "joinTable" });
@@ -134,12 +137,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnCreateTable.addEventListener("click", () => {
     if (activeAction === "create") {
-      ipcRenderer.send("broadcast", { action: "stopCreateTable", isStop: true });
+      ipcRenderer.send("broadcast", {
+        action: "stopCreateTable",
+        isStop: true,
+      });
       resetButtons();
       logStatus("Đã dừng tạo bàn");
     } else {
       if (activeAction === "join") {
-        ipcRenderer.send("broadcast", { action: "stopJoinTable", isStop: true });
+        ipcRenderer.send("broadcast", {
+          action: "stopJoinTable",
+          isStop: true,
+        });
       }
       activeAction = "create";
       ipcRenderer.send("broadcast", { action: "createTable" });
@@ -163,23 +172,25 @@ document.addEventListener("DOMContentLoaded", () => {
   let allConnectedPlayers = [];
 
   const renderCardsHtml = (cardsStr) => {
-    return cardsStr.map(cardStr => {
-      const suit = cardStr.slice(-1);
-      const value = cardStr.slice(0, -1);
-      const isRed = (suit === '♦' || suit === '♥');
-      return `<span class="playing-card ${isRed ? 'red' : ''}">${value}${suit}</span>`;
-    }).join('');
+    return cardsStr
+      .map((cardStr) => {
+        const suit = cardStr.slice(-1);
+        const value = cardStr.slice(0, -1);
+        const isRed = suit === "♦" || suit === "♥";
+        return `<span class="playing-card ${isRed ? "red" : ""}">${value}${suit}</span>`;
+      })
+      .join("");
   };
 
   const getHighlightClass = (loai) => {
-    if (["Thùng Phá Sảnh", "Tứ Quí"].includes(loai)) return 'special-gold';
-    if (["3 cái Thùng", "3 cái Sảnh"].includes(loai)) return 'special-cyan';
-    return '';
+    if (["Thùng Phá Sảnh", "Tứ Quí"].includes(loai)) return "special-gold";
+    if (["3 cái Thùng", "3 cái Sảnh"].includes(loai)) return "special-cyan";
+    return "";
   };
 
   const renderSolvers = () => {
     solverGroup.innerHTML = "";
-    Object.keys(playersData).forEach(playerName => {
+    Object.keys(playersData).forEach((playerName) => {
       const data = playersData[playerName];
       if (!data.solutions || data.solutions.length === 0) return;
 
@@ -187,8 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const solverCard = document.createElement("div");
       solverCard.className = "player-solver-card";
 
-      let solutionsHtml = data.solutions.map((sol, index) => `
-        <div class="solution-item ${data.selectedIndex === index ? 'selected' : ''}" 
+      let solutionsHtml = data.solutions
+        .map(
+          (sol, index) => `
+        <div class="solution-item ${data.selectedIndex === index ? "selected" : ""}" 
              onclick="selectSolutionForPlayer('${playerName}', ${index})">
           <div><b>#${index + 1}</b></div>
           <div style="display:flex; justify-content:space-between; font-size:0.7em;">
@@ -197,10 +210,14 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="${getHighlightClass(sol.chi3.loai)}">${sol.chi3.loai}</span>
           </div>
         </div>
-      `).join('');
+      `,
+        )
+        .join("");
 
-      const selectedSol = data.solutions[data.selectedIndex] || data.solutions[0];
-      const previewHtml = selectedSol ? `
+      const selectedSol =
+        data.solutions[data.selectedIndex] || data.solutions[0];
+      const previewHtml = selectedSol
+        ? `
         <div class="chi-row">
           <span class="chi-header">Chi 1 (3):</span>
           <div class="card-list">${renderCardsHtml(selectedSol.chi1.cards)}</div>
@@ -213,12 +230,13 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="chi-header">Chi 3 (5):</span>
           <div class="card-list">${renderCardsHtml(selectedSol.chi3.cards)}</div>
         </div>
-      ` : '<p>Chọn một phương án</p>';
+      `
+        : "<p>Chọn một phương án</p>";
 
       solverCard.innerHTML = `
         <div class="player-solver-header">
-          <span class="player-name ${isGuest ? 'is-guest' : ''}">${isGuest ? '[DỰ ĐOÁN] ' : ''}${playerName}</span>
-          ${!isGuest ? `<button class="btn-apply" onclick="applyArrangementForPlayer('${playerName}')">Áp Dụng</button>` : ''}
+          <span class="player-name ${isGuest ? "is-guest" : ""}">${isGuest ? "[DỰ ĐOÁN] " : ""}${playerName}</span>
+          ${!isGuest ? `<button class="btn-apply" onclick="applyArrangementForPlayer('${playerName}')">Áp Dụng</button>` : ""}
         </div>
         <div class="solver-layout">
           <div class="solutions-list">${solutionsHtml}</div>
@@ -243,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const cards = [
       ...sol.chi1.cardIds,
       ...sol.chi2.cardIds,
-      ...sol.chi3.cardIds
+      ...sol.chi3.cardIds,
     ];
     ipcRenderer.send("apply-arrangement", { playerName, cards });
   };
@@ -251,10 +269,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Render player list
   const renderPlayers = (names) => {
     playerList.innerHTML = "";
-    names.forEach(name => {
+    names.forEach((name) => {
       const card = document.createElement("div");
       card.className = "player-card";
-      if (playersData[name] && playersData[name].solutions && playersData[name].solutions.length > 0) {
+      if (
+        playersData[name] &&
+        playersData[name].solutions &&
+        playersData[name].solutions.length > 0
+      ) {
         card.classList.add("has-cards");
       }
       card.textContent = name;
@@ -270,9 +292,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const handleMauBinhSolutions = (playerName, solutions) => {
     playersData[playerName] = {
       solutions: solutions,
-      selectedIndex: solutions.length > 0 ? 0 : -1
+      selectedIndex: solutions.length > 0 ? 0 : -1,
     };
-    logStatus(`Đã nhận ${solutions.length} phương án xếp bài cho ${playerName}`);
+    logStatus(
+      `Đã nhận ${solutions.length} phương án xếp bài cho ${playerName}`,
+    );
 
     // Merge guest players into the list if they are not in connected players
     const currentList = [...allConnectedPlayers];
@@ -320,11 +344,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const btnClearSolvers = document.getElementById("btnClearSolvers");
-  btnClearSolvers.addEventListener("click", () => {
+  const clearPlayerList = () => {
     playersData = {};
-    renderPlayers(Array.from(document.querySelectorAll("#playerList .player-card")).map(el => el.textContent));
+    renderPlayers(
+      Array.from(document.querySelectorAll("#playerList .player-card")).map(
+        (el) => el.textContent,
+      ),
+    );
     renderSolvers();
     logStatus("Đã xóa tất cả phương án xếp bài");
+  };
+  btnClearSolvers.addEventListener("click", () => {
+    clearPlayerList();
+  });
+
+  ipcRenderer.on("clearSolvers", () => {
+    clearPlayerList();
   });
 
   // Xử lý cập nhật systemKeys từ main process
@@ -333,7 +368,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const currentSystemKeys = getSystemKeys();
     const newKeys = newSystemKeys.filter(
-      (key) => !currentSystemKeys.includes(key)
+      (key) => !currentSystemKeys.includes(key),
     );
     if (newKeys.length > 0) {
       logStatus(`Đã nhận thêm systemKeys: ${newKeys.join(", ")}`);

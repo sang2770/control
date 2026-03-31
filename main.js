@@ -181,6 +181,10 @@ async function createWindow() {
                 ws.currentCards = null;
                 ws.currentGuest = null;
                 ws.sessionKey = null;
+                // Clear UI solutions khi ván đấu kết thúc
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                  mainWindow.webContents.send("clearSolvers", {});
+                }
               } else if (status.type === "MAUBINH_PLAYER_CARDS_REPORT") {
                 const { playerName, cards } = status;
                 ws.currentCards = cards;
