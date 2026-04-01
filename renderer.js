@@ -183,8 +183,31 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const getHighlightClass = (loai) => {
-    if (["Thùng Phá Sảnh", "Tứ Quí"].includes(loai)) return "special-gold";
-    if (["3 cái Thùng", "3 cái Sảnh"].includes(loai)) return "special-cyan";
+    if (["TPS", "Tứ Quí", "Tứ Quý"].includes(loai)) return "special-gold";
+    return "";
+  };
+
+  const getSolutionHighlightClass = (solution) => {
+    const loais = [solution.chi1.loai, solution.chi2.loai, solution.chi3.loai];
+    const normalizedLoais = loais.map((loai) =>
+      String(loai || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase(),
+    );
+
+    const isThreeThung = normalizedLoais.every((loai) => loai.includes("thung"));
+    const isThreeSanh = normalizedLoais.every((loai) => loai.includes("sanh"));
+
+    if (loais.some((loai) => ["TPS", "Tứ Quí", "Tứ Quý"].includes(loai))) {
+      return "solution-highlight-gold";
+    }
+    if (
+      isThreeThung ||
+      isThreeSanh
+    ) {
+      return "solution-highlight-cyan";
+    }
     return "";
   };
 
@@ -201,7 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
       let solutionsHtml = data.solutions
         .map(
           (sol, index) => `
-        <div class="solution-item ${data.selectedIndex === index ? "selected" : ""}" 
+        <div class="solution-item ${getSolutionHighlightClass(sol)} ${data.selectedIndex === index ? "selected" : ""}" 
              onclick="selectSolutionForPlayer('${playerName}', ${index})">
           <div><b>#${index + 1}</b></div>
           <div style="display:flex; justify-content:space-between; font-size:0.7em;">

@@ -210,7 +210,7 @@ class XepBaiBinh {
             if (d.length > 0) return { name: "Đôi", hang: 3, diem: Math.floor(d[0][0] / 4) };
             return { name: "Mậu Thầu", hang: 1, diem: Math.max(...cards.map(c => Math.floor(c / 4))) };
         }
-        if (this.getTPS(cards).length > 0) return { name: "Thùng Phá Sảnh", hang: 6561, diem: Math.max(...cards.map(c => Math.floor(c / 4))) };
+        if (this.getTPS(cards).length > 0) return { name: "TPS", hang: 6561, diem: Math.max(...cards.map(c => Math.floor(c / 4))) };
         if (this.getDoiXamQui(cards, 4).length > 0) return { name: "Tứ Quí", hang: 2187, diem: 0 };
         if (this.getCuLu(cards).length > 0) return { name: "Cù Lũ", hang: 729, diem: 0 };
         if (this.getThung(cards).length > 0) return { name: "Thùng", hang: 243, diem: 0 };
@@ -251,7 +251,7 @@ class XepBaiBinh {
         let getMaxRank = (cards) => Math.max(...cards.map(getRank));
         let mapCard = (cards) => cards.map(c => c > 51 ? c - 52 : c);
 
-        this.getTPS(this.card).forEach(x => arrXep.push({ card: mapCard(x), binh: "Thùng Phá Sảnh", hang: heso * 2187, diem: getMaxRank(x) }));
+        this.getTPS(this.card).forEach(x => arrXep.push({ card: mapCard(x), binh: "TPS", hang: heso * 2187, diem: getMaxRank(x) }));
         this.getDoiXamQui(this.card, 4).forEach(x => arrXep.push({ card: mapCard(x), binh: "Tứ Quí", hang: heso * 729, diem: getMaxRank(x) }));
         this.getCuLu(this.card).forEach(x => arrXep.push({ card: mapCard(x), binh: "Cù Lũ", hang: heso * 243, diem: getRank(x[0]) }));
         this.getThung(this.card).forEach(x => arrXep.push({ card: mapCard(x), binh: "Thùng", hang: heso * 81, diem: getMaxId(x) }));
