@@ -3,7 +3,7 @@ const { findFreePort } = require("./initSocket");
 const path = require("path");
 const fs = require("fs");
 const WebSocket = require("ws");
-const MauBinhLogic = require("./mau_binh_bruteforce.js");
+const MauBinhLogic = require("./mau_binh_logic.js");
 
 let actionRunning = null;
 
