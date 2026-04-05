@@ -5,6 +5,7 @@ const fs = require("fs");
 const WebSocket = require("ws");
 
 let actionRunning = null;
+let lastConfig = null
 
 let mainWindow;
 
@@ -79,6 +80,9 @@ async function createWindow() {
             );
 
             setTimeout(() => {
+              if (lastConfig) {
+                ws.send(JSON.stringify(lastConfig));
+              }
               if (actionRunning) {
                 ws.send(JSON.stringify({ action: actionRunning }));
               }
@@ -135,10 +139,14 @@ async function createWindow() {
 
   // Xử lý IPC message từ renderer
   ipcMain.on("broadcast", (event, message) => {
-    actionRunning = message.action;
-    broadcast(message);
-    if (message.isStop) {
-      actionRunning = null;
+    if (message.action === "saveSettings") {
+      lastConfig = message;
+    } else {
+      actionRunning = message.action;
+      broadcast(message);
+      if (message.isStop) {
+        actionRunning = null;
+      }
     }
   });
 
