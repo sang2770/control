@@ -141,6 +141,7 @@ async function createWindow() {
   ipcMain.on("broadcast", (event, message) => {
     if (message.action === "saveSettings") {
       lastConfig = message;
+      broadcast(message);
     } else {
       actionRunning = message.action;
       broadcast(message);
