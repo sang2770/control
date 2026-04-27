@@ -44,6 +44,19 @@ async function createWindow() {
 
   mainWindow.loadFile("index.html");
 
+  let baseDir = "";
+
+  if (process.env.PORTABLE_EXECUTABLE_DIR) {
+    baseDir = process.env.PORTABLE_EXECUTABLE_DIR; // ✅ Đây là thư mục gốc chứa file .exe
+  } else {
+    baseDir = path.dirname(process.execPath); // fallback cho non-portable
+  }
+  // Set title to executable name and prevent HTML from overriding it
+  const exeName = baseDir.split("/").pop();
+  console.log("exeName", exeName);
+  mainWindow.setTitle(exeName);
+  mainWindow.on("page-title-updated", (e) => e.preventDefault());
+
   // Khởi động WebSocket server
   let wss;
   try {
@@ -64,9 +77,30 @@ async function createWindow() {
       );
 
       ws.on("message", (message) => {
-        console.log("Received from extension:", message.toString());
+        const messageStr = message.toString();
+        // console.log("Received from extension:", messageStr);
         try {
-          const data = JSON.parse(message);
+          const data = JSON.parse(messageStr);
+
+          // Heartbeat handling
+          if (data.action === "ping") {
+            ws.send(JSON.stringify({ action: "pong" }));
+            return;
+          }
+
+          // Registration handling
+          if (data.action === "register") {
+            console.log("Extension registered");
+            // Sync current state
+            if (lastConfig) {
+              ws.send(JSON.stringify(lastConfig));
+            }
+            if (actionRunning) {
+              ws.send(JSON.stringify({ action: actionRunning }));
+            }
+            return;
+          }
+
           // Xử lý khi client gửi systemKey
           if (data.action === "updateSystemKey" && data.systemKey) {
             // Thêm hoặc cập nhật systemKey
@@ -79,6 +113,7 @@ async function createWindow() {
               `Đã cập nhật systemKey: ${data.systemKey}`
             );
 
+            // Sync current state if not already done by register
             setTimeout(() => {
               if (lastConfig) {
                 ws.send(JSON.stringify(lastConfig));
@@ -86,7 +121,7 @@ async function createWindow() {
               if (actionRunning) {
                 ws.send(JSON.stringify({ action: actionRunning }));
               }
-            }, 1500);
+            }, 1000);
           } else if (data.action === "updateUserStatus" && data.userStatus) {
             // Thêm hoặc cập nhật userStatus
             mainWindow.webContents.send(
@@ -98,7 +133,7 @@ async function createWindow() {
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send(
                 "updateStatusLog",
-                message.toString()
+                messageStr
               );
             }
           }
